@@ -1,0 +1,21 @@
+pre-push:
+  parallel: true
+  commands:
+    packages-audit:
+      tags: frontend security
+      run: pnpm audit
+
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      run: pnpm biome check --write --staged
+      stage_fixed: true
+    typecheck:
+      run: pnpm typecheck
+    test-unit:
+      run: pnpm test:unit --reporter=dot
+    test-integration:
+      run: pnpm test:integration --reporter=dot
+    test-storage:
+      run: pnpm test:storage --reporter=dot

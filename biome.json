@@ -1,0 +1,124 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/pnpm-lock.yaml",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/public",
+      "!**/.vercel",
+      "!**/.claude",
+      "!**/work",
+      "!**/.document",
+      "!**/*.code-workspace"
+    ]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "defaultBranch": "main",
+    "useIgnoreFile": true
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 80,
+    "attributePosition": "auto"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useHtmlLang": "warn",
+        "noHeaderScope": "warn",
+        "useValidAriaRole": {
+          "level": "warn",
+          "options": {
+            "ignoreNonDom": false,
+            "allowInvalidRoles": ["none", "text"]
+          }
+        },
+        "useSemanticElements": "off",
+        "noSvgWithoutTitle": "off",
+        "useMediaCaption": "off",
+        "noAutofocus": "off",
+        "noStaticElementInteractions": "warn",
+        "useValidAutocomplete": "warn"
+      },
+      "complexity": {
+        "noUselessStringConcat": "warn",
+        "noForEach": "warn",
+        "noUselessSwitchCase": "off",
+        "noUselessThisAlias": "off",
+        "noUselessContinue": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "warn",
+        "useJsxKeyInIterable": "off",
+        "useExhaustiveDependencies": "off",
+        "noUnusedVariables": "warn",
+        "noInvalidBuiltinInstantiation": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off",
+        "noBlankTarget": "off"
+      },
+      "style": {
+        "useFragmentSyntax": "warn",
+        "noYodaExpression": "warn",
+        "useDefaultParameterLast": "warn",
+        "useExponentiationOperator": "off",
+        "noUnusedTemplateLiteral": "off",
+        "noUselessElse": "off",
+        "useArrayLiterals": "warn"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "noHeadImportInDocument": "warn",
+        "noDocumentImportInPage": "warn",
+        "noDuplicateElseIf": "warn",
+        "noIrregularWhitespace": "warn"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "error",
+          "fix": "safe",
+          "options": {
+            "attributes": ["classList", "className"],
+            "functions": ["clsx", "cva", "tw", "tw.*"]
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "jsxRuntime": "reactClassic",
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto"
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": true,
+      "trailingCommas": "none"
+    },
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": false
+    }
+  }
+}

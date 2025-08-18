@@ -1,0 +1,76 @@
+name: Deploy Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    # ブランチに基づいて環境を自動選択
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test database connection
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Testing database connection for environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}"
+          # DATABASE_URLが設定されているか確認（値は表示しない）
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set!"
+            exit 1
+          else
+            echo "DATABASE_URL is set (value hidden for security)"
+          fi
+
+      - name: Generate and apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CI: true
+          NODE_ENV: production
+        run: |
+          echo "Running production database migration"
+          pnpm db:migrate:prod
+
+          # 生成されたマイグレーションファイルを確認
+          echo "Generated migration files:"
+          ls -la drizzle/ || echo "No drizzle directory found"
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Push storage configuration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "Linking to Supabase project..."
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+
+          echo "Pushing storage configuration..."
+          supabase config push --yes
+
+          echo "Seeding storage buckets..."
+          # ベータ版のCLIを使用してバケットをシード
+          # 注意: 既存のバケットがある場合は対話的プロンプトが出るが、GitHub Actionsでは自動的にタイムアウトする
+          npx supabase@beta seed buckets --linked || echo "Bucket seeding completed (may have timed out on prompt)"

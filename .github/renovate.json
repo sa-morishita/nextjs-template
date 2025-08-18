@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["after 10pm and before 5am every weekday", "every weekend"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Automatically merge minor and patch updates",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Disable automerge for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Group Next.js related packages",
+      "matchPackagePatterns": ["^next", "^@next"],
+      "groupName": "Next.js packages"
+    },
+    {
+      "description": "Group Supabase packages",
+      "matchPackagePatterns": ["^@supabase"],
+      "groupName": "Supabase packages"
+    },
+    {
+      "description": "Group testing packages",
+      "matchPackagePatterns": ["^@testing-library", "^vitest", "^@vitest"],
+      "groupName": "Testing packages"
+    },
+    {
+      "description": "Group Radix UI packages",
+      "matchPackagePatterns": ["^@radix-ui"],
+      "groupName": "Radix UI packages"
+    }
+  ],
+  "prConcurrentLimit": 5,
+  "prCreation": "not-pending",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "rangeStrategy": "bump"
+}
