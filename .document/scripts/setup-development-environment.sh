@@ -11,7 +11,27 @@ echo "🚀 開発環境のセットアップを開始します..."
 PROJECT_PATH="$(pwd)"
 echo "📁 プロジェクトパス: $PROJECT_PATH"
 
-# 2. Serena MCP を追加
+# 2. 環境変数ファイルのセットアップ
+echo ""
+echo "🔧 環境変数ファイルをセットアップしています..."
+
+# .env.*.example ファイルをコピー（既存のファイルはスキップ）
+for example_file in .env*.example; do
+    if [ -f "$example_file" ]; then
+        # .example を除いたファイル名を取得
+        env_file="${example_file%.example}"
+
+        # 既にファイルが存在する場合はスキップ
+        if [ -f "$env_file" ]; then
+            echo "⏭️  $env_file は既に存在するため、スキップします"
+        else
+            cp "$example_file" "$env_file"
+            echo "✅ $example_file → $env_file をコピーしました"
+        fi
+    fi
+done
+
+# 3. Serena MCP を追加
 echo ""
 echo "📦 Serena MCP を追加しています..."
 claude mcp add serena -- /opt/homebrew/bin/uvx --from git+https://github.com/oraios/serena serena start-mcp-server --enable-web-dashboard false --context ide-assistant --project "$PROJECT_PATH"
@@ -23,7 +43,7 @@ else
     exit 1
 fi
 
-# 3. Sentry MCP を追加
+# 4. Sentry MCP を追加
 echo ""
 echo "📦 Sentry MCP を追加しています..."
 claude mcp add --transport http sentry -s project https://mcp.sentry.dev/mcp
@@ -35,7 +55,7 @@ else
     exit 1
 fi
 
-# 4. Brave Search MCP を追加（.env.mcp.localからAPIキーを読み込み）
+# 5. Brave Search MCP を追加（.env.mcp.localからAPIキーを読み込み）
 echo ""
 echo "📦 Brave Search MCP を追加しています..."
 
@@ -66,7 +86,7 @@ else
     echo "   .env.mcp.localを作成し、BRAVE_API_KEYを設定後、再度実行してください"
 fi
 
-# 5. Context7 MCP を追加
+# 6. Context7 MCP を追加
 echo ""
 echo "📦 Context7 MCP を追加しています..."
 claude mcp add --transport http context7 -s project https://mcp.context7.com/mcp
@@ -78,7 +98,7 @@ else
     exit 1
 fi
 
-# 6. GitMCP を追加（テンプレートリポジトリを参照）
+# 7. GitMCP を追加（テンプレートリポジトリを参照）
 echo ""
 echo "📦 GitMCP を追加しています（テンプレートリポジトリ参照用）..."
 claude mcp add git-mcp-template -s project -- npx -y mcp-remote https://gitmcp.io/sa-morishita/nextjs-template
@@ -91,7 +111,7 @@ else
     exit 1
 fi
 
-# 7. 完了メッセージ
+# 8. 完了メッセージ
 echo ""
 echo "🎉 セットアップが完了しました！"
 echo ""

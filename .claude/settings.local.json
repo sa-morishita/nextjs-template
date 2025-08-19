@@ -64,5 +64,10 @@
     "deny": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["sentry", "brave-search", "context7", "serena"]
+  "enabledMcpjsonServers": [
+    "sentry",
+    "brave-search",
+    "context7",
+    "git-mcp-template"
+  ]
 }
