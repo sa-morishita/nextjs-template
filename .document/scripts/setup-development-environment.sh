@@ -78,7 +78,20 @@ else
     exit 1
 fi
 
-# 6. 完了メッセージ
+# 6. GitMCP を追加（テンプレートリポジトリを参照）
+echo ""
+echo "📦 GitMCP を追加しています（テンプレートリポジトリ参照用）..."
+claude mcp add git-mcp-template -s project -- npx -y mcp-remote https://gitmcp.io/sa-morishita/nextjs-template
+
+if [ $? -eq 0 ]; then
+    echo "✅ GitMCP の追加に成功しました"
+    echo "   参照リポジトリ: https://github.com/sa-morishita/nextjs-template"
+else
+    echo "❌ GitMCP の追加に失敗しました"
+    exit 1
+fi
+
+# 7. 完了メッセージ
 echo ""
 echo "🎉 セットアップが完了しました！"
 echo ""
@@ -86,6 +99,8 @@ echo "⚠️  重要な注意事項:"
 echo "   1. 次回 Claude Code 起動時に Sentry の認証を求められます。"
 echo "      画面の指示に従って認証を完了してください。"
 echo "   2. Brave Search MCPを使用するには、.env.mcp.localにBRAVE_API_KEYを設定してください。"
+echo "   3. GitMCP経由でテンプレートリポジトリ（sa-morishita/nextjs-template）を参照できます。"
+echo "      コード品質の基準として活用してください。"
 echo ""
 
 # 今後追加される可能性のある設定項目のためのスペース
