@@ -1,9 +1,3 @@
-/**
- * Dashboard Footer Component
- *
- * ベストプラクティス: 静的なフッターコンポーネント
- * 静的にレンダリングされ、キャッシュされる。
- */
 export function DashboardFooter() {
   return (
     <footer className="mt-auto border-t">

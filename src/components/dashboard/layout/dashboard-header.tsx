@@ -5,13 +5,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils/utils';
 import { DynamicUserInfo } from './_containers/dynamic-user-info';
 
-/**
- * Dashboard Header Component
- *
- * ベストプラクティス: Streaming SSR対応のヘッダーコンポーネント
- * 静的な部分（ナビゲーション）と動的な部分（ユーザー情報）を分離し、
- * TTFBを改善しつつ、パーソナライズされた体験を提供。
- */
 export function DashboardHeader() {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -53,12 +46,6 @@ export function DashboardHeader() {
   );
 }
 
-/**
- * User Info Skeleton
- *
- * ベストプラクティス: 適切なスケルトンUIでLayout Shiftを防ぐ
- * 実際のコンテンツと同じ高さ・幅を持つことでCLSを最小化。
- */
 function UserInfoSkeleton() {
   return (
     <div className="flex items-center gap-4">

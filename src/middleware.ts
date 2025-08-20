@@ -1,6 +1,3 @@
-// Next.js 15 + Better Auth のベストプラクティス (2025年7月)
-// Middleware: 楽観的チェック（UX改善）+ Server Components/Actions: 厳密な検証
-
 import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
 

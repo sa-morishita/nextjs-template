@@ -67,8 +67,6 @@ export async function getTodoByIdWithAuth(
     return null;
   }
 
-  // ベストプラクティス: アクセス制御
-  // 他のユーザーのTODOにアクセスしようとした場合はエラーを発生
   if (todo.userId !== userId) {
     console.log(
       `Forbidden access: User ${userId} tried to access TODO ${id} owned by ${todo.userId}`,

@@ -2,13 +2,6 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import * as schema from '@/db/schema';
 
-/**
- * 結合テスト用データベースセットアップ (2025年ベストプラクティス)
- *
- * pushSchema APIをdynamic importで使用 (Vitest互換性対応)
- * ハードコーディング完全不要・スキーマ自動同期
- */
-
 let testDbCounter = 0;
 
 export async function createTestDatabase() {

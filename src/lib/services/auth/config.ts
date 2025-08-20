@@ -171,7 +171,6 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true, // メール認証を必須に
-    // パスワードリセット機能（2025年ベストプラクティス対応）
     sendResetPassword: async ({ user, url }) => {
       console.log('🔑 Password reset requested for:', user.email);
       console.log('🔑 Password reset URL:', url);
@@ -195,7 +194,7 @@ export const auth = betterAuth({
       console.log('🔑 Password successfully reset for user:', user.email);
       // 必要に応じて追加のログ記録やセッション無効化を実装
     },
-    // トークンの有効期限（1時間 = 3600秒）- セキュリティベストプラクティス
+    // トークンの有効期限（1時間 = 3600秒）-
     resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
     // パスワード強度要件（NIST 2025ガイドライン準拠）
     minPasswordLength: 12, // 2025年推奨最小長
@@ -258,7 +257,7 @@ export const auth = betterAuth({
                 userInfoUrl: 'https://api.line.me/v2/profile',
                 scopes: ['profile', 'openid'],
                 responseType: 'code',
-                pkce: true, // PKCE有効（2025年セキュリティベストプラクティス）
+                pkce: true, // PKCE有効
                 mapProfileToUser: async (profile: Record<string, unknown>) => {
                   console.log('📱 LINE profile:', profile);
                   // プロファイルを型安全にキャスト

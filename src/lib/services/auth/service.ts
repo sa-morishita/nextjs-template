@@ -204,14 +204,6 @@ export async function resendVerificationEmail(data: { email: string }) {
   return result;
 }
 
-/**
- * パスワードリセット要求
- *
- * 2025年ベストプラクティス:
- * - レート制限対応
- * - 一貫性のあるレスポンス時間
- * - セキュアなトークン生成
- */
 export async function requestPasswordReset(data: { email: string }) {
   console.log('🔑 Requesting password reset for:', data.email);
 
@@ -239,14 +231,6 @@ export async function requestPasswordReset(data: { email: string }) {
   }
 }
 
-/**
- * パスワードリセット実行
- *
- * 2025年ベストプラクティス:
- * - トークン検証
- * - セッション無効化
- * - パスワード強度チェック
- */
 export async function resetPassword(data: {
   token: string;
   newPassword: string;
