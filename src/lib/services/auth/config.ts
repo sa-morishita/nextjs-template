@@ -196,8 +196,7 @@ export const auth = betterAuth({
     },
     // トークンの有効期限（1時間 = 3600秒）-
     resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
-    // パスワード強度要件（NIST 2025ガイドライン準拠）
-    minPasswordLength: 12, // 2025年推奨最小長
+    minPasswordLength: 12,
     maxPasswordLength: 128,
   },
   emailVerification: {
