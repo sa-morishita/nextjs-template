@@ -58,7 +58,7 @@ export function VerificationMessage() {
 
         // 3秒後にダッシュボードにリダイレクト
         setTimeout(() => {
-          router.push('/dashboard/mypage');
+          router.push('/dashboard');
         }, 3000);
       } else {
         setState('error');

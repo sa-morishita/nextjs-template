@@ -26,7 +26,7 @@ export const signInAction = actionClient
   })
   .action(async ({ parsedInput: { email, password } }) => {
     await signInWithEmail({ email, password });
-    redirect('/dashboard/mypage');
+    redirect('/dashboard');
   });
 
 export const signUpAction = actionClient

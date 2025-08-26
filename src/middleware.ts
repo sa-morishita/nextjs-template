@@ -22,7 +22,13 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith('/auth');
   const isEmailVerificationRoute = pathname.startsWith('/auth/verify-email');
-  const isProtectedRoute = pathname.startsWith('/dashboard/mypage');
+  const isProtectedRoute = pathname.startsWith('/dashboard');
+  const isSignOutRoute = pathname.startsWith('/auth/signout');
+
+  // サインアウトルートは常に許可
+  if (isSignOutRoute) {
+    return NextResponse.next();
+  }
 
   // 保護されたルートでセッションクッキーがない場合のリダイレクト
   if (!sessionCookie && isProtectedRoute) {
@@ -32,9 +38,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // 認証済みユーザーが認証ページにアクセスした場合のリダイレクト（メール認証ページは除く）
-  if (sessionCookie && isAuthRoute && !isEmailVerificationRoute) {
+  if (
+    sessionCookie &&
+    isAuthRoute &&
+    !isEmailVerificationRoute &&
+    !isSignOutRoute
+  ) {
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard/mypage';
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 

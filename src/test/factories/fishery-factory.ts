@@ -44,6 +44,7 @@ export const diaryFactory = Factory.define<Diary>(
     content: `This is test diary content ${sequence}`,
     userId: associations.userId || `user-${sequence}`,
     imageUrl: null,
+    blurDataUrl: null,
     status: 'published',
     type: 'diary',
     createdAt: new Date(),
@@ -94,6 +95,15 @@ export async function createTestDiaryInDB(
     userId,
   });
 
-  const [created] = await db.insert(diariesTable).values(diaryData).returning();
+  // 明示的に型キャストして、必要なプロパティを含む形式にする
+  const insertData = {
+    ...diaryData,
+    blurDataUrl: diaryData.blurDataUrl ?? null,
+  };
+
+  const [created] = await db
+    .insert(diariesTable)
+    .values(insertData)
+    .returning();
   return created;
 }

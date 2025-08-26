@@ -1,0 +1,1 @@
+ALTER TABLE "diaries" ADD COLUMN "blur_data_url" text;

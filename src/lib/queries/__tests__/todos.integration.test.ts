@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  getTodoByIdWithAuth,
-  getTodosByUserId,
-  getTodosSummary,
-} from '@/lib/queries/todos';
+import { getTodosByUserId } from '@/lib/queries/todos';
 import { getSession } from '@/lib/services/auth';
+import {
+  getTodoByIdUsecase,
+  getTodosSummaryUsecase,
+} from '@/lib/usecases/todos';
 import {
   createTestTodo,
   createTestUser,
@@ -91,7 +91,7 @@ describe('TODO Queries 結合テスト', () => {
         });
 
         // When: 自分のTODOの詳細を取得
-        const result = await getTodoByIdWithAuth(todo.id, user.id);
+        const result = await getTodoByIdUsecase(todo.id, { userId: user.id });
 
         // Then: TODO詳細が取得できる
         expect(result).toBeDefined();
@@ -113,9 +113,9 @@ describe('TODO Queries 結合テスト', () => {
 
         // When: user2がuser1のTODOにアクセスしようとする
         // Then: 認可エラーが発生する
-        await expect(getTodoByIdWithAuth(todo.id, user2.id)).rejects.toThrow(
-          'このTODOにアクセスする権限がありません',
-        );
+        await expect(
+          getTodoByIdUsecase(todo.id, { userId: user2.id }),
+        ).rejects.toThrow('このTODOにアクセスする権限がありません');
       });
     });
   });
@@ -160,7 +160,7 @@ describe('TODO Queries 結合テスト', () => {
         });
 
         // When: ダッシュボード統計を取得
-        const summary = await getTodosSummary();
+        const summary = await getTodosSummaryUsecase();
 
         // Then: 正しい統計情報が取得される
         expect(summary.total).toBe(3);

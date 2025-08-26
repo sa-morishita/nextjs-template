@@ -1,5 +1,5 @@
-import { getUserDiaries } from '@/lib/queries/diaries';
 import { getSession } from '@/lib/services/auth';
+import { getDiaryListUsecase } from '@/lib/usecases/diary';
 import { DiaryListPresentational } from './presentational';
 
 export async function DiaryListContainer({
@@ -20,7 +20,9 @@ export async function DiaryListContainer({
     dateTo: params.dateTo ? new Date(params.dateTo) : undefined,
   };
 
-  const diaries = await getUserDiaries(session.user.id, filters);
+  const diaries = await getDiaryListUsecase(filters, {
+    userId: session.user.id,
+  });
 
   return <DiaryListPresentational diaries={diaries} />;
 }

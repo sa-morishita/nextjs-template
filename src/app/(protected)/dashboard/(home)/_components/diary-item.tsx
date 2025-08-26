@@ -1,9 +1,8 @@
 'use client';
 
-import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Diary } from '@/db/schema';
+import { formatDate, formatDateTimeSlash } from '@/lib/utils/date';
 
 interface DiaryItemProps {
   diary: Diary;
@@ -13,9 +12,7 @@ interface DiaryItemProps {
 export function DiaryItem({ diary, onClick }: DiaryItemProps) {
   const displayTitle =
     diary.title ||
-    (diary.createdAt
-      ? format(new Date(diary.createdAt), 'yyyy年MM月dd日', { locale: ja })
-      : '無題の日記');
+    (diary.createdAt ? formatDate(diary.createdAt) : '無題の日記');
   const preview =
     diary.content.slice(0, 100) + (diary.content.length > 100 ? '...' : '');
 
@@ -32,9 +29,7 @@ export function DiaryItem({ diary, onClick }: DiaryItemProps) {
           </p>
           {diary.createdAt && (
             <p className="text-muted-foreground text-xs">
-              {format(new Date(diary.createdAt), 'yyyy/MM/dd HH:mm', {
-                locale: ja,
-              })}
+              {formatDateTimeSlash(diary.createdAt)}
             </p>
           )}
         </div>

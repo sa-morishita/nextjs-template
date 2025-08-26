@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DiaryListContainer } from './_containers/diary-list';
 import { TaskListContainer } from './_containers/task-list';
 
-export default async function MyPage({
+export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -15,7 +15,7 @@ export default async function MyPage({
 }) {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 font-bold text-3xl">マイページ</h1>
+      <h1 className="mb-8 font-bold text-3xl">ダッシュボード</h1>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* タスクセクション */}

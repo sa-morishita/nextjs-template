@@ -5,14 +5,16 @@ import 'server-only';
 import { returnValidationErrors } from 'next-safe-action';
 import type { z } from 'zod';
 import {
+  adjustDateToEndOfDay,
   DIARY_MESSAGES,
   DIARY_STATUS,
   DIARY_TYPE,
+  type DiaryFilters,
   isValidDiaryContent,
   isValidDiaryTitle,
 } from '@/lib/domain/diary';
 import { createDiary } from '@/lib/mutations/diaries';
-import { getTodaysDiaryByUserId } from '@/lib/queries/diaries';
+import { getTodaysDiaryByUserId, getUserDiaries } from '@/lib/queries/diaries';
 import { createDiaryFormSchema } from '@/lib/schemas/diary';
 
 /**
@@ -37,7 +39,7 @@ export async function createDiaryUsecase(
   input: CreateDiaryInput,
   context: UsecaseContext,
 ): Promise<void> {
-  const { title, content, imageUrl } = input;
+  const { title, content, imageUrl, blurDataUrl } = input;
   const { userId } = context;
 
   // タイトルの妥当性チェック
@@ -72,7 +74,41 @@ export async function createDiaryUsecase(
     title,
     content,
     imageUrl: imageUrl || undefined,
+    blurDataUrl: blurDataUrl || undefined,
     status: DIARY_STATUS.PUBLISHED,
     type: DIARY_TYPE.DIARY,
   });
+}
+
+/**
+ * Query用Usecases
+ */
+
+/**
+ * ユーザーの日記リストを取得する
+ */
+export async function getDiaryListUsecase(
+  filters: DiaryFilters,
+  context: UsecaseContext,
+) {
+  const { userId } = context;
+
+  // フィルターの日付を調整（終了日を1日の終わりまで含む）
+  const adjustedFilters: DiaryFilters = {
+    ...filters,
+    dateTo: filters.dateTo ? adjustDateToEndOfDay(filters.dateTo) : undefined,
+  };
+
+  return getUserDiaries(userId, adjustedFilters);
+}
+
+/**
+ * 今日の日記が既に作成されているかチェックする
+ */
+export async function checkTodaysDiaryUsecase(
+  context: UsecaseContext,
+): Promise<boolean> {
+  const { userId } = context;
+  const diary = await getTodaysDiaryByUserId(userId);
+  return !!diary;
 }

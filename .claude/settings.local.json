@@ -59,7 +59,16 @@
       "mcp__serena__think_about_whether_you_are_done",
       "mcp__git-mcp-template__search_nextjs_template_code",
       "mcp__git-mcp-template__fetch_generic_url_content",
-      "Bash(TZ=Asia/Tokyo date '+%Y_%m_%d_%H_%M')"
+      "Bash(TZ=Asia/Tokyo date '+%Y_%m_%d_%H_%M')",
+      "Bash(pnpm drizzle-kit:*)",
+      "Bash(touch:*)",
+      "WebFetch(domain:developer.mozilla.org)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:web.dev)",
+      "WebFetch(domain:nextjs.org)",
+      "Bash(supabase status:*)",
+      "WebFetch(domain:www.better-auth.com)"
     ],
     "deny": []
   },

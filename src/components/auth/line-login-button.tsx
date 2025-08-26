@@ -11,7 +11,7 @@ interface LineLoginButtonProps {
 }
 
 export function LineLoginButton({
-  redirectTo = '/dashboard/mypage',
+  redirectTo = '/dashboard',
   className = '',
 }: LineLoginButtonProps) {
   const [isLoading, setIsLoading] = useState(false);

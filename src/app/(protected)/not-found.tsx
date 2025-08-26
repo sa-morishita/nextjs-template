@@ -23,7 +23,7 @@ export default function NotFound() {
           <p className="mb-6 text-muted-foreground">
             URLが正しいか確認するか、ホームページに戻ってください。
           </p>
-          <Link href="/dashboard/mypage" className={cn(buttonVariants())}>
+          <Link href="/dashboard" className={cn(buttonVariants())}>
             ダッシュボードに戻る
           </Link>
         </CardContent>

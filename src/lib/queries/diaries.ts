@@ -3,14 +3,9 @@ import { and, between, desc, eq, gte, like, lte, or } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/db';
 import { type Diary, diaries } from '@/db/schema';
+import type { DiaryFilters } from '@/lib/domain/diary';
 import { CACHE_TAGS } from '@/lib/utils/cache-tags';
 import { getJapanEndOfDay, getJapanStartOfDay } from '@/lib/utils/date';
-
-export interface DiaryFilters {
-  searchQuery?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
-}
 
 export function getUserDiaries(userId: string, filters?: DiaryFilters) {
   return unstable_cache(
@@ -33,10 +28,7 @@ export function getUserDiaries(userId: string, filters?: DiaryFilters) {
         conditions.push(gte(diaries.createdAt, filters.dateFrom));
       }
       if (filters?.dateTo) {
-        // 終了日の23:59:59までを含む
-        const endOfDay = new Date(filters.dateTo);
-        endOfDay.setHours(23, 59, 59, 999);
-        conditions.push(lte(diaries.createdAt, endOfDay));
+        conditions.push(lte(diaries.createdAt, filters.dateTo));
       }
 
       const result = await db

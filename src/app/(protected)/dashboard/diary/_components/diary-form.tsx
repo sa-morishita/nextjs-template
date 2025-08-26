@@ -32,6 +32,7 @@ import { DIARY_MESSAGES } from '@/lib/domain/diary';
 import { UPLOAD_MESSAGES } from '@/lib/domain/upload';
 import { createDiaryFormSchema } from '@/lib/schemas';
 import { uploadFileWithSignedUrl } from '@/lib/services/image-upload-client.service';
+import { generateClientBlurDataURL } from '@/lib/utils/blur-generator';
 import { convertActionErrorToMessage } from '@/lib/utils/error-converter';
 
 interface DiaryFormProps {
@@ -58,6 +59,7 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
           title: '',
           content: '',
           imageUrl: '',
+          blurDataUrl: '',
         },
       },
       actionProps: {
@@ -118,12 +120,24 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
     setIsUploading(true);
     setPendingFile(file);
 
+    // blur生成（非同期で並列実行）
+    const blurDataUrlPromise = generateClientBlurDataURL(file);
+
     // Presigned URLを取得
     await getSignedUrl({
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
     });
+
+    // blur生成完了を待ってformに設定
+    try {
+      const blurDataUrl = await blurDataUrlPromise;
+      form.setValue('blurDataUrl', blurDataUrl);
+    } catch (error) {
+      console.error('Blur generation failed:', error);
+      // blur生成に失敗してもアップロード処理は続行
+    }
   };
 
   return (

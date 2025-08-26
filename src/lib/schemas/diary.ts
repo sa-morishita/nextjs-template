@@ -17,6 +17,7 @@ export const createDiaryFormSchema = z.object({
     .url('正しいURLを入力してください')
     .optional()
     .or(z.literal('')),
+  blurDataUrl: z.string().optional().or(z.literal('')),
 });
 
 // 型のエクスポート

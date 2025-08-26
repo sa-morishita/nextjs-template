@@ -24,10 +24,7 @@ export default function VerifyEmailSuccessPage() {
         </p>
 
         <div className="space-y-4">
-          <Link
-            href="/dashboard/mypage"
-            className={cn(buttonVariants(), 'w-full')}
-          >
+          <Link href="/dashboard" className={cn(buttonVariants(), 'w-full')}>
             ダッシュボードへ
           </Link>
 

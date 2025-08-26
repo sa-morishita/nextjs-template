@@ -87,6 +87,7 @@ describe('DiaryForm', () => {
         title: 'テストタイトル',
         content: 'テスト内容',
         imageUrl: '',
+        blurDataUrl: '',
       });
     });
   });

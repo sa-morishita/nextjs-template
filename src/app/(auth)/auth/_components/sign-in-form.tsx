@@ -47,7 +47,7 @@ export function SignInForm() {
           toast.success('サインインしました');
           resetFormAndAction();
           setShowResendButton(false);
-          router.push('/dashboard/mypage');
+          router.push('/dashboard');
         },
         onError: ({ error }) => {
           const message = convertActionErrorToMessage(

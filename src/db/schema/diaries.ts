@@ -19,6 +19,7 @@ export const diaries = pgTable(
     title: text('title'),
     content: text('content').notNull(),
     imageUrl: text('image_url'),
+    blurDataUrl: text('blur_data_url'),
     status: varchar('status', { length: 20 }).notNull().default('draft'), // draft, published, archived
     type: varchar('type', { length: 20 }).notNull().default('diary'), // diary, note, memo
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

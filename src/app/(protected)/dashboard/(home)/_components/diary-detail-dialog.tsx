@@ -1,7 +1,5 @@
 'use client';
 
-import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import Image from 'next/image';
 import {
   Dialog,
@@ -10,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Diary } from '@/db/schema';
+import { formatDate, formatDateTime } from '@/lib/utils/date';
 
 interface DiaryDetailDialogProps {
   diary: Diary | null;
@@ -26,9 +25,7 @@ export function DiaryDetailDialog({
 
   const displayTitle =
     diary.title ||
-    (diary.createdAt
-      ? format(new Date(diary.createdAt), 'yyyy年MM月dd日', { locale: ja })
-      : '無題の日記');
+    (diary.createdAt ? formatDate(diary.createdAt) : '無題の日記');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,9 +37,7 @@ export function DiaryDetailDialog({
         <div className="space-y-4">
           {diary.createdAt && (
             <p className="text-muted-foreground text-sm">
-              {format(new Date(diary.createdAt), 'yyyy年MM月dd日 HH:mm', {
-                locale: ja,
-              })}
+              {formatDateTime(diary.createdAt)}
             </p>
           )}
 
@@ -51,6 +46,8 @@ export function DiaryDetailDialog({
               <Image
                 src={diary.imageUrl}
                 alt="日記の画像"
+                placeholder={diary.blurDataUrl ? 'blur' : 'empty'}
+                blurDataURL={diary.blurDataUrl || undefined}
                 fill
                 className="object-contain"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

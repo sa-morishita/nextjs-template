@@ -1,296 +1,141 @@
-体系的な機能実装プロセス（調査→要件定義→ユーザー確認）
+# AGENTS.md
 
----
+This file provides guidance when working with code in this repository.
 
-allowed-tools: ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "LS", "Task", "TodoWrite", "TodoRead", "WebSearch"]
-description: "調査・要件定義・ユーザー承認確認までの体系的な開発プロセスを実行します"
+## Development Commands
+
+### Code Quality & Validation
+
+- `pnpm biome check --write .` - Run Biome check with auto-fix (recommended for AI code updates)
+- `pnpm typecheck` - TypeScript type checking
+- `pnpm check:all` - Run all checks (Biome + TypeScript)
 
----
-
-# implement-feature
-
-新機能の実装を体系的に進めるためのコマンドです。
-**重要：このコマンドは調査・要件定義作成・ユーザーへの確認までを行います。実装は承認後に別途進めます。**
-
-## 作業の基本的な流れ
-
-1. **調査・計画フェーズ** - 既存コードとベストプラクティスを調査し、実装計画を策定
-2. **要件定義作成** - 詳細な要件定義ファイルを作成
-3. **承認確認** - ユーザーに要件定義を提示し、承認を求める（ここまでがこのコマンドの範囲）
-
-## Instructions
-
-ユーザーからの機能要件: $ARGUMENTS
-
-### フェーズ1: プロジェクト情報の収集と初期化
-
-#### 1.1 ブランチ情報とIssue情報の確認
-
-現在のブランチを確認し、ブランチ名にissue番号が含まれている場合は、GitHub APIでIssue情報を取得：
-
-```bash
-# 現在のブランチ名を取得
-git branch --show-current
-```
-
-ブランチ名からissue番号を抽出（例：`feature/123-new-feature` → `123`）し、以下のコマンドでIssue情報を取得：
-
-```bash
-gh issue view [ISSUE_NUMBER] --json title,body,labels,state,assignees,url
-```
-
-#### 1.2 タスク管理の初期化
-
-TodoWriteツールを使用して以下のタスクリストを作成：
-
-- ブランチ名からIssue番号を確認・抽出する
-- GitHub Issue情報を取得・分析する
-- Issue情報をベースに要件を理解する
-- 既存の実装を調査・理解する
-- 関連するベストプラクティスを調査する
-- 実装方針を決定する
-- 要件定義ファイルを作成する
-- ユーザーに承認を求める
-
-### フェーズ2: 既存コードの徹底的な調査
-
-#### 2.1 プロジェクト構造の理解
-
-- Glob/Grep/LSツールを使用して関連ファイルを特定
-- 同じディレクトリ内の他のファイルを確認
-- 同じ種類のコンポーネント/モジュールのパターンを学習
-- テストファイルで期待される動作を確認
-
-#### 2.2 技術スタックの確認
-
-- package.json、tsconfig.json などの設定ファイルを読む
-- 使用されているライブラリとバージョンを確認
-- プロジェクト固有の慣習やヘルパー関数を特定
-
-#### 2.3 テンプレートパターンとサンプルコードの確認【最重要】
-
-- 必ず .knowledge/nextjs-template/TEMPLATE_PATTERNS.md を最初に読む
-- 実装したい機能に該当するパターンを特定
-- GitMCPの使用ルール：
-  - **searchは使用禁止** → 適切なクエリ作成が困難なため
-  - **fetchのみ使用** → TEMPLATE_PATTERNS.mdに記載されたファイルを直接取得
-  - GitMCPは探し物のコードを見つけるためではなく、**Next.jsの実装パターンを学ぶため**に使用
-- 該当パターンの「GitMCPで取得すべきファイル」セクションに記載されているすべての`fetch_url_content`コマンドを実行
-- 取得したファイルから以下を学習：
-  - Next.jsのベストプラクティス（RSC、Container/Presentational、Server Actions等）
-  - データフローのパターン（action → usecase → query/mutation）
-  - エラーハンドリングの標準的な方法
-  - ディレクトリ構造と命名規則
-- 学んだパターンを忠実に再現して実装
-- 複数パターンの組み合わせが必要な場合は、それぞれのパターンのファイルを取得
-- AIの古い知識に頼らず、テンプレートリポジトリの実装パターンを優先する
-
-### フェーズ3: 最新技術情報の調査
-
-以下のファイルに記載されている内容を確認して実行してください：
-
-```
-@.claude/commands/dev/research.md
-```
-
-このファイルを使用して以下を確認：
-
-- 実装しようとしている機能の最新のベストプラクティス
-- 使用するライブラリの最新バージョンのドキュメント
-- セキュリティのベストプラクティス
-- パフォーマンス最適化の手法
-
-例：
-
-- `/dev:research React 19 best practices [実装内容]`
-- `/dev:research Next.js 15 [機能名] implementation`
-- `/dev:research TypeScript 5 [機能名] security`
-
-### フェーズ4: 要件定義ファイルの作成
-
-#### 4.1 ファイル作成
-
-```bash
-# 日本時間でファイル名を生成
-touch ".document/todo/$(date '+%Y_%m_%d_%H_%M')_[機能の簡潔な説明].md"
-```
-
-#### 4.2 要件定義の内容
-
-以下のテンプレートに従って詳細な要件定義を作成：
-
-````markdown
-# プロジェクト情報
-
-## ブランチ情報
-
-- 現在のブランチ: [ブランチ名]
-- Issue番号: [抽出されたIssue番号、存在しない場合は「なし」]
-
-## GitHub Issue情報
-
-[Issue番号が存在する場合のみ記載]
-
-- Issue #[番号]: [タイトル]
-- ステータス: [状態]
-- URL: [IssueのURL]
-- ラベル: [ラベル一覧]
-- アサイニー: [担当者]
-
-### Issue詳細
-
-[Issueの本文内容]
-
-# ユーザーからのプロンプト
-
-[ユーザーから受け取った指示をそのまま記載]
-
-# 要件定義
-
-## 背景と目的
-
-- なぜこの機能/修正が必要か
-- 解決したい課題は何か
-- 期待される効果
-
-## 機能要件
-
-- 実装する機能の詳細仕様
-- 入力/出力の定義
-- ユーザーインターフェースの仕様
-- エラーハンドリングの方針
-
-## 技術仕様
-
-### 変更対象のファイル
-
-- [ファイルパスと変更内容の概要]
-
-### 使用する技術/ライブラリ
-
-- [技術名とバージョン、選定理由]
-
-### アーキテクチャへの影響
-
-- 既存アーキテクチャとの整合性
-- 新しく導入するパターン
-
-### 適用するテンプレートパターン
-
-- [TEMPLATE_PATTERNS.mdから選択したパターン名]
-- GitMCPで取得・参照したファイル：
-  - [取得したファイルパスと、そこから学んだ実装方法]
-  - 例：`src/lib/actions/todos.ts` → privateActionClientの使い方、bindArgsSchemasの実装方法
-  - 例：`src/lib/usecases/todos.ts` → returnValidationErrorsでのエラーハンドリング
-- その他参考にしたドキュメント
-
-## 影響範囲
-
-- 既存機能への影響
-- データベーススキーマへの影響
-- APIインターフェースへの影響
-- パフォーマンスへの影響
-- セキュリティへの影響
-
-## リスクと対策
-
-| リスク       | 影響度   | 対策           |
-| ------------ | -------- | -------------- |
-| [リスク内容] | 高/中/低 | [具体的な対策] |
-
-# 実装と検証のTODO
-
-## 実装タスク
-
-- [ ] タスク1：[具体的な実装内容]
-  - 注意点：[このタスクで気をつけるべきこと]
-  - 実装例：
-    ```typescript
-    // 関数/コンポーネントの構造とシグネチャ
-    export async function functionName(params: ParamType): Promise<ReturnType> {
-      // 1. バリデーション処理
-      // 2. メインロジック
-      // 3. エラーハンドリング
-      // 4. 戻り値の返却
-    }
-    ```
-
-- [ ] タスク2：[具体的な実装内容]
-  - 注意点：[既存コードとの整合性、命名規則など]
-  - 実装例：[コード構造の例]
-
-## 検証タスク
-
-- [ ] Biome でコードフォーマット・リント修正
-  - コマンド: `pnpm biome check --write .`
-  - 注意点：自動修正された内容を必ず確認
-
-- [ ] TypeScript 型チェック
-  - コマンド: `pnpm typecheck`
-  - 注意点：any型の使用は避ける
-
-- [ ] 既存テストの実行
-  - コマンド: `pnpm test`
-  - 注意点：既存機能が壊れていないことを確認
-
-- [ ] 新機能のテスト作成
-  - ユニットテスト
-  - 統合テスト（必要に応じて）
-  - エッジケースのテスト
-
-- [ ] ビルド確認
-  - コマンド: `pnpm build`
-  - 注意点：本番環境と同じ条件でビルド
-````
-
-### フェーズ5: ユーザーへの確認【最重要】
-
-要件定義ファイルを作成したら、必ず以下を実行：
-
-1. 要件定義ファイルの全内容を読み込んで表示
-2. 以下のメッセージでユーザーに確認を求める：
-
-```
-要件定義ファイルを作成しました：[ファイルパス]
-
-[要件定義の内容を表示]
-
-この要件定義で実装を進めてよろしいでしょうか？
-承認いただけましたら、実装フェーズに進みます。
-修正が必要な場合は、お知らせください。
-```
-
-## 重要な原則
-
-### 既存コードとの一貫性
-
-- 既存のコーディングスタイルに合わせる
-- 同じ問題に対して既に使われている解決パターンを採用
-- プロジェクト固有の慣習やヘルパー関数を活用
-- 新しいパターンを導入する前に、既存の方法を優先
-
-### プロダクション品質の追求
-
-- エラーハンドリングを適切に実装
-- エッジケースを考慮
-- パフォーマンスへの影響を考慮
-- セキュリティリスクを排除
-- 保守性の高いコードを設計
-
-### 不明点の確認
-
-以下の場合は必ず確認を求める：
-
-- ビジネスロジックの詳細が不明確
-- 複数の実装方法があり、どれを選ぶべきか判断できない
-- 既存の実装と矛盾する要求がある
-- セキュリティや性能に関わる重要な決定
-
-## このコマンドの目的
-
-1. **品質向上**：実装前に十分な検討を行い、手戻りを減らす
-2. **透明性確保**：ユーザーが実装内容を事前に把握し、期待値を合わせる
-3. **リスク軽減**：影響範囲を明確にし、想定外の問題を防ぐ
-4. **効率化**：明確な計画により、実装がスムーズに進む
-
-**注意：このコマンドは要件定義の承認確認までで終了します。実際の実装は、ユーザーの承認後に開始してください。**
+### Database Commands
+
+- `pnpm db:migrate:dev` - Apply database migrations in development environment
+
+**IMPORTANT**: Never execute database schema changes or migrations automatically. Always ask for user confirmation before running commands.
+
+### Testing
+
+- `pnpm test:unit` - Run unit tests
+- `pnpm test:integration` - Run integration tests
+- Test naming: `*.test.ts(x)` (unit), `*.integration.test.ts`, `*.storage.test.ts`
+
+## Architecture Overview
+
+### Tech Stack & Configuration
+
+- **Framework**: Next.js 15.3 with App Router, React 19 Server Components first
+- **Language**: TypeScript strict mode, path alias `@/*` → `./src/*`
+- **Styling**: Tailwind CSS v4
+- **UI**: Radix UI primitives with shadcn/ui pattern
+- **Database**: Supabase Local + Drizzle ORM
+- **Authentication**: Better Auth with email/password
+- **Forms**: React Hook Form + Zod + next-safe-action
+- **State**: Zustand for client-side state
+- **Quality**: Biome (formatting/linting), Lefthook (git hooks)
+- **Testing**: Vitest + React Testing Library
+- **Monitoring**: Sentry for error tracking
+- **Environment**: @t3-oss/env-nextjs for validation
+
+### Project Structure
+
+- `app/` - Next.js App Router pages and layouts
+  - `(auth)/` - Authentication routes (login, signup, password reset)
+  - `(protected)/` - Protected routes requiring authentication
+  - `api/auth/[...all]/` - Better Auth API routes
+- `components/` - Reusable UI components
+  - `auth/` - Authentication-specific components
+  - `dashboard/` - Dashboard layout components
+  - `ui/` - Base UI components (shadcn/ui pattern)
+- `db/` - Database configuration
+  - `schema/` - Drizzle ORM schemas (auth, todos, diaries)
+- `lib/` - Core application logic:
+  - `actions/` - Server actions (imports from usecases)
+  - `domain/` - Domain models and business rules
+  - `mutations/` - Data mutation logic
+  - `queries/` - Data fetching logic
+  - `schemas/` - Zod validation schemas
+  - `services/` - Business services (auth, email, image upload)
+  - `supabase/` - Supabase client and storage utilities
+  - `usecases/` - Application business logic
+  - `utils/` - Utility functions and helpers
+- `test/` - Test utilities and helpers
+
+### Architectural Patterns
+
+#### Container/Presentational Pattern
+
+- **Container**: Server Components that handle data fetching
+- **Presentational**: UI components that receive props
+- **Structure**: `_containers/` with `index.tsx`, `container.tsx`, `presentational.tsx`
+
+#### Data Flow
+
+`actions/` → `usecases/` → `mutations/`/`queries/`/`services/`
+
+#### Caching Strategy
+
+- **Tags**: `todos-user-${userId}`, `todo-${id}`, `todos-all`
+- **Invalidation**: Update relevant tags after mutations
+- **Memoization**: Automatic within same render
+
+## Development Guidelines
+
+### Coding Conventions
+
+- **Programming**: Functional/declarative, no classes
+- **Naming**:
+  - Directories: lowercase-with-dashes
+  - Functions: `get*`, `create*`, `update*`, `delete*` (async DB ops)
+  - Pure functions: `convert*`, `calculate*`, `validate*`, `map*`
+- **TypeScript**: Prefer interfaces, no enums (use const maps)
+- **Components**: Server Components first, minimize `use client`
+- **Style**: Follow existing patterns, use Tailwind CSS v4
+
+### Error Handling
+
+- **Server Actions**: Use next-safe-action with automatic error catching
+  - Throw errors in actions/usecases/queries/mutations (no try-catch)
+  - Errors are caught by `handleServerError` and translated
+  - **IMPORTANT**: Do NOT use try-catch in application logic
+- **Error Files**:
+  - `error.tsx`: Catches errors in route segments
+  - `not-found.tsx`: Custom 404 pages
+  - `global-error.tsx`: Root-level error boundary
+- **User Experience**: Japanese error messages via error translator
+
+### Testing Strategy
+
+- **Unit Tests** (`*.test.ts(x)`):
+  - Place in `__tests__/` directories
+  - Mock at query/mutation level
+  - Container: test as async functions
+  - Presentational: test with React Testing Library
+- **Integration Tests** (`*.integration.test.ts`):
+  - PGLite in-memory database
+  - @praha/drizzle-factory for test data
+  - Reset sequences in `beforeEach`
+- **Storage Tests** (`*.storage.test.ts`):
+  - Mock file system operations
+
+## Framework Specific
+
+### Next.js 15 Features
+
+- **Dynamic Routes**: `params` and `searchParams` are Promises
+- **URL State**: Type-safe with nuqs library
+- **next-safe-action v8**:
+  - Use `.inputSchema()` for validation
+  - `.bind()` for non-form values
+  - Navigation actions trigger `onNavigation`
+- **Performance**: Wrap RSC queries in `<Suspense>`
+
+### Authentication
+
+- **Configuration**: Better Auth in `src/lib/services/auth/`
+- **Client Hooks**: `useSession()`, `signIn()`, `signUp()`, `signOut()`
+- **Server**: `getSession()` for server-side access
+- **Features**: Email verification, password reset, session management
+- **Database**: Better Auth tables + application tables in Drizzle schema

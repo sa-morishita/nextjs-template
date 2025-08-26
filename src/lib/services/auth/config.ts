@@ -235,7 +235,11 @@ export const auth = betterAuth({
           sameSite: 'lax',
           httpOnly: true,
           path: '/',
+          // ローカル開発時の無限リダイレクト回避のため明示的にドメインを設定しない
+          // domain: undefined, // ブラウザが自動的にドメインを設定
         },
+        // デバッグ用のクッキー削除機能を改善
+        clearOn: ['signOut'],
       },
     },
   },

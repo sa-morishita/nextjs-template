@@ -173,7 +173,7 @@ describe('TODO Usecases 結合テスト', () => {
         );
 
         // Then: 更新成功
-        const updatedTodo = await getTodoById(todo.id, user.id);
+        const updatedTodo = await getTodoById(todo.id);
         expect(updatedTodo?.title).toBe('更新後のタイトル');
         expect(updatedTodo?.completed).toBe(true);
       });
@@ -204,7 +204,7 @@ describe('TODO Usecases 結合テスト', () => {
         );
 
         // Then: 更新成功（完了時は重複チェックなし）
-        const updatedTodo = await getTodoById(myTodo.id, user.id);
+        const updatedTodo = await getTodoById(myTodo.id);
         expect(updatedTodo?.title).toBe('重複タイトル');
         expect(updatedTodo?.completed).toBe(true);
       });
@@ -229,7 +229,7 @@ describe('TODO Usecases 結合テスト', () => {
         );
 
         // Then: 更新成功
-        const updatedTodo = await getTodoById(todo.id, user.id);
+        const updatedTodo = await getTodoById(todo.id);
         expect(updatedTodo?.title).toBe('タスク');
         expect(updatedTodo?.completed).toBe(true);
       });

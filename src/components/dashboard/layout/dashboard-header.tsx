@@ -11,12 +11,12 @@ export function DashboardHeader() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard/mypage" className="font-semibold text-xl">
+            <Link href="/dashboard" className="font-semibold text-xl">
               TODO App
             </Link>
             <nav className="hidden gap-2 md:flex">
               <Link
-                href="/dashboard/mypage"
+                href="/dashboard"
                 className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}
               >
                 マイページ
