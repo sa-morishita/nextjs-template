@@ -69,6 +69,17 @@ jobs:
           echo -e "\n3. Listing files Biome can see:"
           pnpm biome check . --vcs-enabled=false --verbose 2>&1 | grep -A 20 "Files processed:" || true
           
+          echo -e "\n=== Testing with minimal config ==="
+          echo '{"files": {"includes": ["**/*.ts", "**/*.tsx"]}}' > biome.test.json
+          echo "Created test config:"
+          cat biome.test.json
+          echo -e "\nTesting with minimal config:"
+          pnpm biome check . --config-path=./biome.test.json || true
+          
+          echo -e "\n=== Checking specific file directly ==="
+          echo "Testing specific file:"
+          pnpm biome check ./src/app/error.tsx --verbose || true
+          
       - name: Run Biome check
         run: pnpm biome check .
 
