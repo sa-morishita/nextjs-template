@@ -33,8 +33,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Debug Biome environment
+        run: |
+          echo "Current directory:"
+          pwd
+          echo -e "\nGit status:"
+          git status || echo "Git not available"
+          echo -e "\nBiome config location:"
+          find . -name "biome.json" -type f
+          echo -e "\nTesting biome with explicit path:"
+          pnpm biome check . --verbose || true
+          echo -e "\nTesting biome without path:"
+          pnpm biome check --verbose || true
+          
       - name: Run Biome check
-        run: pnpm biome check
+        run: pnpm biome check .
 
       - name: Run TypeScript type check
         run: pnpm typecheck
