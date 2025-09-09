@@ -1,7 +1,8 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import type { NextConfig } from 'next';
+import type { NextConfig } from 'next/types';
 
 const nextConfig: NextConfig = {
+  typedRoutes: true,
   images: {
     remotePatterns: [
       {

@@ -90,6 +90,13 @@ When using dev3000 for development monitoring:
 
 ## Development Guidelines
 
+### AI Assistant Guidelines
+
+- **動作確認**: アプリケーションの動作確認が必要な場合は、`pnpm dev`を実行せず、開発者に確認を依頼してください
+  - 理由: 開発サーバーは通常ローカルで既に起動されており、重複起動はエラーや待ち時間を引き起こします
+  - 代わりに: 「ブラウザで動作を確認してください」と開発者に依頼する
+  - コード変更後は自動的にHMR（Hot Module Replacement）が適用されます
+
 ### Coding Conventions
 
 - **Programming**: Functional/declarative, no classes
