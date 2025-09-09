@@ -38,15 +38,12 @@ export default function VerifyEmailErrorPage() {
         </div>
 
         <div className="space-y-3">
-          <Link
-            href="/sample/auth/signup"
-            className={cn(buttonVariants(), 'w-full')}
-          >
+          <Link href="/auth/signup" className={cn(buttonVariants(), 'w-full')}>
             新しい認証メールを要求
           </Link>
 
           <Link
-            href="/sample/auth/login"
+            href="/auth/login"
             className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
           >
             ログインページへ

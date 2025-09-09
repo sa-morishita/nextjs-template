@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
         <div className="text-muted-foreground text-sm">
           リンクが無効な場合は{' '}
           <Link
-            href="/sample/auth/forgot-password"
+            href="/auth/forgot-password"
             className="text-primary hover:underline"
           >
             新しいリセットリンクを要求

@@ -142,7 +142,7 @@ export function VerificationMessage() {
   const handleButtonClick = () => {
     switch (state) {
       case 'success':
-        router.push('/dashboard/mypage');
+        router.push('/dashboard');
         break;
       case 'error':
         resendVerification();

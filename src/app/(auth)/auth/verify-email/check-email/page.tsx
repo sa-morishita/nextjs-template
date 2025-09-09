@@ -127,7 +127,7 @@ export default function CheckEmailPage() {
 
             <div className="border-t pt-4">
               <Link
-                href="/sample/auth/login"
+                href="/auth/login"
                 className="text-primary text-sm hover:underline"
               >
                 ← ログインページに戻る

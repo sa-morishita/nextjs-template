@@ -71,7 +71,7 @@ export default function ErrorPage({
           <Button
             variant="outline"
             size="lg"
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/auth/login')}
             className="inline-flex items-center gap-2 shadow-sm"
           >
             <HomeIcon className="h-4 w-4" />

@@ -235,7 +235,7 @@ export async function requestPasswordReset(data: { email: string }) {
     const result = await auth.api.forgetPassword({
       body: {
         email: data.email,
-        redirectTo: '/sample/auth/reset-password', // リセットページURL
+        redirectTo: '/auth/reset-password', // リセットページURL
       },
       headers: await headers(),
     });
