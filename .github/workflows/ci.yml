@@ -80,6 +80,21 @@ jobs:
           echo "Testing specific file:"
           pnpm biome check ./src/app/error.tsx --verbose || true
           
+          echo -e "\n=== Testing with glob patterns ==="
+          echo "Testing with src/**/*.ts pattern:"
+          pnpm biome check 'src/**/*.ts' || true
+          echo -e "\nTesting with src/**/*.tsx pattern:"
+          pnpm biome check 'src/**/*.tsx' || true
+          
+          echo -e "\n=== Checking biome.json includes configuration ==="
+          cat biome.json | jq '.files.includes'
+          
+          echo -e "\n=== Testing without the current biome.json ==="
+          mv biome.json biome.json.backup
+          echo "Running biome without config file:"
+          pnpm biome check . || true
+          mv biome.json.backup biome.json
+          
       - name: Run Biome check
         run: pnpm biome check .
 
