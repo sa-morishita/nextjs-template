@@ -22,6 +22,13 @@ This file provides guidance when working with code in this repository.
 - `pnpm test:integration` - Run integration tests
 - Test naming: `*.test.ts(x)` (unit), `*.integration.test.ts`, `*.storage.test.ts`
 
+### Development Monitoring (dev3000)
+
+When using dev3000 for development monitoring:
+- **Log file location**: `/tmp/dev3000.log` (default path)
+- **MCP tools**: When using dev3000 MCP tools (`mcp__dev3000__*`), specify `logPath: "/tmp/dev3000.log"` parameter
+- **Custom log paths**: If dev3000 is started with custom options, adjust the logPath accordingly
+
 ## Architecture Overview
 
 ### Tech Stack & Configuration

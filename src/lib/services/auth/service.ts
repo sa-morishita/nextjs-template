@@ -182,7 +182,7 @@ async function clearSessionCookies() {
   for (const cookieName of cookieNames) {
     try {
       cookieStore.delete(cookieName);
-    } catch (error) {
+    } catch {
       // 削除エラーは無視
     }
   }

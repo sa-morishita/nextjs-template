@@ -57,8 +57,6 @@
       "Bash(gh api:*)",
       "mcp__serena__activate_project",
       "mcp__serena__think_about_whether_you_are_done",
-      "mcp__git-mcp-template__search_nextjs_template_code",
-      "mcp__git-mcp-template__fetch_generic_url_content",
       "Bash(TZ=Asia/Tokyo date '+%Y_%m_%d_%H_%M')",
       "Bash(pnpm drizzle-kit:*)",
       "Bash(touch:*)",
@@ -68,15 +66,20 @@
       "WebFetch(domain:web.dev)",
       "WebFetch(domain:nextjs.org)",
       "Bash(supabase status:*)",
-      "WebFetch(domain:www.better-auth.com)"
+      "WebFetch(domain:www.better-auth.com)",
+      "WebFetch(domain:github.blog)",
+      "mcp__dev3000__read_consolidated_logs",
+      "mcp__dev3000__healthcheck"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
+    "serena",
     "sentry",
     "brave-search",
     "context7",
-    "git-mcp-template"
+    "playwright",
+    "dev3000"
   ]
 }

@@ -52,8 +52,20 @@ cp .env.local.example .env.local
 # 5. データベースのセットアップ
 pnpm db:migrate:dev
 
-# 6. 開発サーバーの起動
-pnpm dev
+# 6. 開発サーバーの起動（dev3000を使用）
+pnpm dev  # dev3000による標準起動（デバッグ情報収集機能付き）
+
+# または従来のNext.js開発サーバー
+pnpm dev:next  # turbopackを使用した高速開発サーバー
+```
+
+#### dev3000について
+
+dev3000は開発中のWebアプリケーションのデバッグ情報を包括的に収集するVercel製のツールです。サーバーログ、ブラウザイベント、コンソールメッセージ、ネットワークリクエスト、自動スクリーンショットを統一されたタイムラインで記録し、AI（Claude）によるデバッグ支援を可能にします。
+
+**ポートオプション**: 異なるポートで起動する場合は `--port` オプションを使用できます：
+```bash
+pnpm dev --port 3001  # ポート3001で起動
 ```
 
 ### 必須環境変数
@@ -83,7 +95,8 @@ LINE_LOGIN_CHANNEL_SECRET=<LINE Developersから取得>
 
 ```bash
 # 開発
-pnpm dev                    # 開発サーバー起動
+pnpm dev                    # dev3000による開発サーバー起動（デバッグ機能付き）
+pnpm dev:next              # turbopackによる高速開発サーバー
 pnpm build                  # プロダクションビルド
 
 # コード品質

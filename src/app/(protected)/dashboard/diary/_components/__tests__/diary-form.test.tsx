@@ -17,7 +17,7 @@ vi.mock('@/lib/services/image-upload-client.service', () => ({
 // Mock next/image
 vi.mock('next/image', () => ({
   default: vi.fn().mockImplementation(({ src, alt, ...props }) => {
-    // eslint-disable-next-line @next/next/no-img-element
+    // biome-ignore lint/performance/noImgElement: テスト用のモック関数
     return <img src={src} alt={alt} {...props} />;
   }),
 }));
