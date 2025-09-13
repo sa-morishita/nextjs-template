@@ -21,6 +21,8 @@ export default defineConfig({
     exclude: [
       '**/*.integration.test.ts',
       '**/*.storage.test.ts',
+      '**/*.spec.ts', // Playwright E2E tests
+      'e2e/**', // Playwright E2E test directory
       'node_modules',
       'work/**',
     ],
