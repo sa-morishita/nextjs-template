@@ -69,7 +69,16 @@
       "WebFetch(domain:www.better-auth.com)",
       "WebFetch(domain:github.blog)",
       "mcp__dev3000__read_consolidated_logs",
-      "mcp__dev3000__healthcheck"
+      "mcp__dev3000__healthcheck",
+      "WebFetch(domain:executeautomation.github.io)",
+      "mcp__playwright__browser_snapshot",
+      "WebFetch(domain:www.headspace.com)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_network_requests",
+      "Bash(pnpm check:all:*)"
     ],
     "deny": []
   },

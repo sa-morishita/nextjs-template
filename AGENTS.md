@@ -20,7 +20,10 @@ This file provides guidance when working with code in this repository.
 
 - `pnpm test:unit` - Run unit tests
 - `pnpm test:integration` - Run integration tests
-- Test naming: `*.test.ts(x)` (unit), `*.integration.test.ts`, `*.storage.test.ts`
+- `pnpm test:storage` - Run storage tests
+- `pnpm test:e2e` - Run E2E tests with Playwright
+- `pnpm test:all` - Run all tests
+- Test naming: `*.test.ts(x)` (unit), `*.integration.test.ts`, `*.storage.test.ts`, E2E tests in `e2e/specs/`
 
 ### Development Monitoring (dev3000)
 
@@ -42,7 +45,7 @@ When using dev3000 for development monitoring:
 - **Forms**: React Hook Form + Zod + next-safe-action
 - **State**: Zustand for client-side state
 - **Quality**: Biome (formatting/linting), Lefthook (git hooks)
-- **Testing**: Vitest + React Testing Library
+- **Testing**: Vitest + React Testing Library + Playwright (E2E)
 - **Monitoring**: Sentry for error tracking
 - **Environment**: @t3-oss/env-nextjs for validation
 
@@ -68,7 +71,11 @@ When using dev3000 for development monitoring:
   - `supabase/` - Supabase client and storage utilities
   - `usecases/` - Application business logic
   - `utils/` - Utility functions and helpers
-- `test/` - Test utilities and helpers
+- `test/` - Test utilities and helpers (Vitest)
+- `e2e/` - E2E tests with Playwright
+  - `specs/` - Test specifications
+  - `global-setup.ts` - Global test setup
+  - `global-teardown.ts` - Global test cleanup
 
 ### Architectural Patterns
 
@@ -133,6 +140,10 @@ When using dev3000 for development monitoring:
   - Reset sequences in `beforeEach`
 - **Storage Tests** (`*.storage.test.ts`):
   - Mock file system operations
+- **E2E Tests** (`e2e/specs/*.spec.ts`):
+  - Playwright browser automation
+  - Real browser testing
+  - Visual regression testing capabilities
 
 ## Framework Specific
 
