@@ -2,6 +2,15 @@
 
 This file provides guidance when working with code in this repository.
 
+## MCP Usage Guidelines
+
+### Brave Search MCP
+
+**IMPORTANT**: Brave Search MCP has API rate limits. When using Brave Search tools (`mcp__brave-search__*`), execute them **sequentially** (one at a time) to avoid rate limit errors. Do NOT run multiple Brave Search tools in parallel.
+
+- ✅ **Correct**: Execute search queries one after another
+- ❌ **Incorrect**: Running multiple `mcp__brave-search__brave_web_search` calls simultaneously
+
 ## Development Commands
 
 ### Code Quality & Validation
@@ -28,6 +37,7 @@ This file provides guidance when working with code in this repository.
 ### Development Monitoring (dev3000)
 
 When using dev3000 for development monitoring:
+
 - **Log file location**: `/tmp/dev3000.log` (default path)
 - **MCP tools**: When using dev3000 MCP tools (`mcp__dev3000__*`), specify `logPath: "/tmp/dev3000.log"` parameter
 - **Custom log paths**: If dev3000 is started with custom options, adjust the logPath accordingly
@@ -99,10 +109,10 @@ When using dev3000 for development monitoring:
 
 ### AI Assistant Guidelines
 
-- **動作確認**: アプリケーションの動作確認が必要な場合は、`pnpm dev`を実行せず、開発者に確認を依頼してください
-  - 理由: 開発サーバーは通常ローカルで既に起動されており、重複起動はエラーや待ち時間を引き起こします
-  - 代わりに: 「ブラウザで動作を確認してください」と開発者に依頼する
-  - コード変更後は自動的にHMR（Hot Module Replacement）が適用されます
+- **Application Testing**: When application testing is needed, do NOT run `pnpm dev` - instead, ask the developer to verify
+  - Reason: The development server is usually already running locally, duplicate startup causes errors and delays
+  - Instead: Ask the developer "Please verify the functionality in your browser"
+  - Code changes are automatically applied through HMR (Hot Module Replacement)
 
 ### Coding Conventions
 

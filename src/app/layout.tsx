@@ -9,16 +9,12 @@ export const metadata: Metadata = {
   description: 'Next.js 15 Template',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout(props: LayoutProps<'/'>) {
   return (
     <html lang="ja">
       <body className={`${notoSansJP.variable} antialiased`}>
         <NuqsAdapter>
-          {children}
+          {props.children}
           <Toaster />
         </NuqsAdapter>
       </body>

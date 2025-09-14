@@ -16,7 +16,7 @@ if (!global.fetch) {
 // 環境変数は storage-setup-env.ts で読み込まれている
 export const testSupabaseClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:55077',
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   {
     auth: {
       autoRefreshToken: false,

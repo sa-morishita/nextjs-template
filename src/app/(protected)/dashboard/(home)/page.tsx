@@ -4,15 +4,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DiaryListContainer } from './_containers/diary-list';
 import { TaskListContainer } from './_containers/task-list';
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    search?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }>;
-}) {
+export default async function DashboardPage(props: PageProps<'/dashboard'>) {
+  const searchParams = props.searchParams;
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-8 font-bold text-3xl">ダッシュボード</h1>

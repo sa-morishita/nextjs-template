@@ -13,12 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AUTH_ERROR_MESSAGES } from '@/lib/constants/auth-errors';
 import { SignInForm } from '../_components/sign-in-form';
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; message?: string }>;
-}) {
-  const params = await searchParams;
+export default async function LoginPage(props: PageProps<'/auth/login'>) {
+  const params = await props.searchParams;
   const errorMessage = params.error
     ? AUTH_ERROR_MESSAGES[params.error as keyof typeof AUTH_ERROR_MESSAGES]
     : null;
