@@ -37,6 +37,7 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
    - ワークツリー専用MinIOストレージディレクトリの作成
    - データベースマイグレーションの実行
    - Git hooksのセットアップ
+   - MinIOストレージサーバーの自動起動
    - VSCode workspaceファイルの更新
 
    !bash .document/scripts/create-worktree.sh [ワークツリー名] [ブランチ名]
@@ -44,14 +45,21 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
 6. 作成されたワークツリーに移動
    !cd work/[ワークツリー名]
 
-7. 開発準備完了の確認
+7. 開発準備完了の確認と環境情報の表示
    !echo "✅ ワークツリーの作成と開発環境のセットアップが完了しました"
    !echo "📁 作業ディレクトリ: $(pwd)"
    !echo "🌿 現在のブランチ: $(git branch --show-current)"
    !echo ""
-   !echo "💡 MinIOストレージが必要な場合は以下のコマンドで起動してください:"
-   !echo "source .env.local"
-   !echo 'minio server "$DEV_MINIO_DATA_DIR" --address ":$DEV_MINIO_PORT" --console-address ":$DEV_MINIO_CONSOLE_PORT"'
+   
+   # 環境変数から実際のポート番号を取得して表示
+   !source .env.local 2>/dev/null && echo "🚀 MinIOストレージサーバーが自動的に起動されました"
+   !source .env.local 2>/dev/null && echo "   📡 API: http://localhost:$DEV_MINIO_PORT"
+   !source .env.local 2>/dev/null && echo "   🌐 Console: http://localhost:$DEV_MINIO_CONSOLE_PORT (minioadmin/minioadmin)"
+   !source .env.local 2>/dev/null && echo "   📦 バケット管理はConsoleから行えます"
+   !echo ""
+   !source .env.local 2>/dev/null && echo "🎨 Drizzle Studio (データベース管理)"
+   !source .env.local 2>/dev/null && echo "   🌐 起動: pnpm db:studio"
+   !source .env.local 2>/dev/null && echo "   📡 URL: http://localhost:$DRIZZLE_STUDIO_PORT"
 
 ## 使用例
 
@@ -72,4 +80,5 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
 - 各ワークツリーは独立したPostgreSQLデータベースを持ちます
 - 各ワークツリーは独立したMinIOストレージディレクトリを持ちます
 - .env.localは自動的にコピーされ、ワークツリー用に設定が更新されます
-- MinIOは必要に応じて手動で起動します（メインと同じポートを使用）
+- MinIOストレージサーバーは自動的に起動されます（各ワークツリーで同じポートを使用）
+- ワークツリー削除時にMinIOプロセスも自動的に停止されます

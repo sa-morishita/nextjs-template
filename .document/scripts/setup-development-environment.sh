@@ -43,12 +43,17 @@ MINIO_PORT=$((10000 + PORT_OFFSET))  # 10000-19999の範囲
 MINIO_CONSOLE_PORT=$((20000 + PORT_OFFSET))  # 20000-29999の範囲
 MINIO_DATA_DIR="./dev-minio-${HASH}"
 
+# Drizzle Studio設定（ハッシュベースでポート番号を生成）
+# 30000-39999の範囲で、他のサービスと衝突しない範囲を使用
+DRIZZLE_STUDIO_PORT=$((30000 + PORT_OFFSET))
+
 echo "🆔 プロジェクト識別子: $IDENTIFIER"
 echo "🔢 ハッシュ: $HASH"
 echo "🐘 PostgreSQL DB名: $DB_NAME"
 echo "🗄️  MinIO API ポート: $MINIO_PORT"
 echo "🌐 MinIO Console ポート: $MINIO_CONSOLE_PORT"
 echo "📦 MinIO データディレクトリ: $MINIO_DATA_DIR"
+echo "🎨 Drizzle Studio ポート: $DRIZZLE_STUDIO_PORT"
 
 # 3. 環境変数ファイルのセットアップ
 echo ""
@@ -79,6 +84,7 @@ for example_file in .env*.example; do
                     sed -i '' "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
                     sed -i '' "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
                     sed -i '' "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                    sed -i '' "s|^DRIZZLE_STUDIO_PORT=$|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" "$env_file"
                 else
                     # Linux
                     sed -i "s|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|" "$env_file"
@@ -88,6 +94,7 @@ for example_file in .env*.example; do
                     sed -i "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
                     sed -i "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
                     sed -i "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                    sed -i "s|^DRIZZLE_STUDIO_PORT=$|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" "$env_file"
                 fi
                 echo "🔧 開発環境用の設定値を $env_file に適用しました"
             fi
@@ -247,7 +254,31 @@ else
     echo "⚠️  .gitignoreファイルが見つかりません"
 fi
 
-# 12. 完了メッセージ
+# 12. package.jsonのdb:studioコマンドを更新
+echo ""
+echo "🔧 package.jsonのdb:studioコマンドを更新しています..."
+
+# package.jsonファイルが存在するか確認
+if [ -f "package.json" ]; then
+    # 既にdrizzle-kit studio --portが含まれているか確認
+    if grep -q '"db:studio".*drizzle-kit studio --port' package.json; then
+        echo "⏭️  db:studioコマンドは既に更新されています"
+    else
+        # db:studioコマンドを更新（macOS/BSD sedとGNU sedの両方に対応）
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' 's/"db:studio": ".*"/"db:studio": "source .env.local \&\& drizzle-kit studio --port \$DRIZZLE_STUDIO_PORT"/' package.json
+        else
+            # Linux
+            sed -i 's/"db:studio": ".*"/"db:studio": "source .env.local \&\& drizzle-kit studio --port \$DRIZZLE_STUDIO_PORT"/' package.json
+        fi
+        echo "✅ db:studioコマンドを更新しました"
+    fi
+else
+    echo "⚠️  package.jsonファイルが見つかりません"
+fi
+
+# 13. 完了メッセージ
 echo ""
 echo "🎉 セットアップが完了しました！"
 echo ""
@@ -256,6 +287,7 @@ echo "   🆔 プロジェクト識別子: $IDENTIFIER"
 echo "   🐘 PostgreSQL DB: $DB_NAME"
 echo "   🗄️  MinIO API: http://localhost:$MINIO_PORT"
 echo "   🌐 MinIO Console: http://localhost:$MINIO_CONSOLE_PORT"
+echo "   🎨 Drizzle Studio: http://localhost:$DRIZZLE_STUDIO_PORT"
 echo ""
 echo "⚠️  重要な注意事項:"
 echo "   1. 次回 Claude Code 起動時に Sentry の認証を求められます。"

@@ -83,9 +83,6 @@ PROJECT_NAME=$(basename "$PROJECT_ROOT")
 ACTUAL_WORKTREE_NAME=$(basename "$WORKTREE_PATH")
 DB_NAME="${PROJECT_NAME//-/_}_${ACTUAL_WORKTREE_NAME//-/_}_dev"
 
-# MinIOデータディレクトリのパスを取得
-HASH=$(echo -n "$ACTUAL_WORKTREE_NAME" | shasum -a 256 | cut -c1-8)
-MINIO_DATA_DIR="$PROJECT_ROOT/dev-minio-worktree-${HASH}"
 
 # 確認プロンプト
 echo ""
@@ -94,7 +91,6 @@ echo -e "${YELLOW}以下を削除します:${NC}"
 echo -e "${YELLOW}  - worktree: $WORKTREE_PATH${NC}"
 echo -e "${YELLOW}  - ブランチ: $BRANCH_NAME${NC}"
 echo -e "${YELLOW}  - データベース: $DB_NAME${NC}"
-echo -e "${YELLOW}  - MinIOデータ: $MINIO_DATA_DIR${NC}"
 echo ""
 echo -n "削除する場合は 'yes' と入力してください: "
 read -r CONFIRMATION
@@ -104,19 +100,30 @@ if [ "$CONFIRMATION" != "yes" ]; then
     exit 0
 fi
 
-# MinIOプロセスが実行中か確認（該当ディレクトリを使用しているか）
+
+# MinIOプロセスの停止
 echo -e "${YELLOW}MinIOプロセスを確認しています...${NC}"
-if [ -d "$MINIO_DATA_DIR" ]; then
-    # lsofコマンドが利用可能な場合のみチェック
-    if command -v lsof >/dev/null 2>&1; then
-        if lsof "$MINIO_DATA_DIR" >/dev/null 2>&1; then
-            echo -e "${YELLOW}⚠️  MinIOデータディレクトリが使用中です。MinIOプロセスを停止してください${NC}"
-            echo -e "${YELLOW}   使用中のプロセス:${NC}"
-            lsof "$MINIO_DATA_DIR" | head -10
-            echo ""
-            echo -e "${YELLOW}   MinIOを停止するには、該当するターミナルでCtrl+Cを押してください${NC}"
+
+# PIDファイルを確認してMinIOを停止
+if [ -f "$WORKTREE_FULL_PATH/.minio.pid" ]; then
+    PID=$(cat "$WORKTREE_FULL_PATH/.minio.pid")
+    if kill -0 $PID 2>/dev/null; then
+        echo -e "${YELLOW}MinIOを停止しています...${NC}"
+        kill $PID
+        sleep 2
+        
+        # 強制終了が必要な場合
+        if kill -0 $PID 2>/dev/null; then
+            kill -9 $PID
         fi
+        
+        echo -e "${GREEN}✅ MinIOを停止しました${NC}"
+    else
+        echo -e "${YELLOW}MinIOプロセスが見つかりません（PID: $PID）${NC}"
     fi
+    rm -f "$WORKTREE_FULL_PATH/.minio.pid"
+else
+    echo -e "${YELLOW}MinIOは起動していません${NC}"
 fi
 
 # worktreeの削除
@@ -172,20 +179,6 @@ else
     echo -e "${YELLOW}PostgreSQLがインストールされていないため、データベースの削除をスキップします${NC}"
 fi
 
-# MinIOデータディレクトリの削除
-echo ""
-echo -e "${YELLOW}MinIOデータディレクトリを削除しています...${NC}"
-
-if [ -d "$MINIO_DATA_DIR" ]; then
-    if rm -rf "$MINIO_DATA_DIR"; then
-        echo -e "${GREEN}✅ MinIOデータディレクトリ '$MINIO_DATA_DIR' を削除しました${NC}"
-    else
-        echo -e "${RED}⚠️  MinIOデータディレクトリ '$MINIO_DATA_DIR' の削除に失敗しました${NC}"
-        echo "   MinIOが実行中の可能性があります。停止してから再度実行してください"
-    fi
-else
-    echo -e "${YELLOW}MinIOデータディレクトリ '$MINIO_DATA_DIR' は既に削除されています${NC}"
-fi
 
 # VSCode workspaceファイルを更新
 update_vscode_workspace() {
@@ -308,7 +301,6 @@ echo -e "${GREEN}削除されたリソース:${NC}"
 echo -e "${GREEN}  - worktree: $WORKTREE_PATH${NC}"
 echo -e "${GREEN}  - ブランチ: $BRANCH_NAME${NC}"
 echo -e "${GREEN}  - データベース: $DB_NAME${NC}"
-echo -e "${GREEN}  - MinIOデータ: $MINIO_DATA_DIR${NC}"
 echo ""
 echo "現在のworktree一覧:"
 git worktree list

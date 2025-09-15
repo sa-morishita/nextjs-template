@@ -244,9 +244,8 @@ setup_worktree() {
     # 4. ワークツリー専用のMinIOデータディレクトリを作成
     echo -e "${YELLOW}ワークツリー専用のMinIOストレージを準備しています...${NC}"
     
-    # ワークツリー名からハッシュ生成（8文字）
-    HASH=$(echo -n "$WORKTREE_NAME" | shasum -a 256 | cut -c1-8)
-    MINIO_DATA_DIR="../../dev-minio-worktree-${HASH}"
+    # ワークツリー内にMinIOデータディレクトリを作成
+    MINIO_DATA_DIR="./minio-data"
     
     # MinIOデータディレクトリを作成
     if [ ! -d "$MINIO_DATA_DIR" ]; then
@@ -260,20 +259,40 @@ setup_worktree() {
     if [ -f ".env.local" ]; then
         echo -e "${YELLOW}.env.localの環境変数を更新しています...${NC}"
         
+        # ワークツリー名のハッシュから固有のポート番号を生成
+        # ベースポート: 9100 (API), 9200 (Console)
+        HASH_NUM=$(echo -n "$WORKTREE_NAME" | cksum | cut -d' ' -f1)
+        # 100-999の範囲でポートオフセットを生成
+        PORT_OFFSET=$((100 + ($HASH_NUM % 900)))
+        MINIO_API_PORT=$((9000 + $PORT_OFFSET))
+        MINIO_CONSOLE_PORT=$((9100 + $PORT_OFFSET))
+        
+        # Drizzle Studioポート（5000-5999の範囲）
+        DRIZZLE_STUDIO_PORT=$((5000 + ($HASH_NUM % 1000)))
+        
         # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
         if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
             sed -i '' "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" .env.local
             sed -i '' "s|^DEV_MINIO_DATA_DIR=.*|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.local
+            sed -i '' "s|^DEV_MINIO_PORT=.*|DEV_MINIO_PORT=$MINIO_API_PORT|" .env.local
+            sed -i '' "s|^DEV_MINIO_CONSOLE_PORT=.*|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.local
+            sed -i '' "s|^DRIZZLE_STUDIO_PORT=.*|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" .env.local
         else
             # Linux
             sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" .env.local
             sed -i "s|^DEV_MINIO_DATA_DIR=.*|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.local
+            sed -i "s|^DEV_MINIO_PORT=.*|DEV_MINIO_PORT=$MINIO_API_PORT|" .env.local
+            sed -i "s|^DEV_MINIO_CONSOLE_PORT=.*|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.local
+            sed -i "s|^DRIZZLE_STUDIO_PORT=.*|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" .env.local
         fi
         
         echo -e "${GREEN}✅ .env.localの環境変数を更新しました${NC}"
         echo -e "${BLUE}  DATABASE_URL: postgresql://localhost:5432/$DB_NAME${NC}"
         echo -e "${BLUE}  DEV_MINIO_DATA_DIR: $MINIO_DATA_DIR${NC}"
+        echo -e "${BLUE}  DEV_MINIO_PORT: $MINIO_API_PORT${NC}"
+        echo -e "${BLUE}  DEV_MINIO_CONSOLE_PORT: $MINIO_CONSOLE_PORT${NC}"
+        echo -e "${BLUE}  DRIZZLE_STUDIO_PORT: $DRIZZLE_STUDIO_PORT${NC}"
     fi
 
     # 6. 依存関係のインストール
@@ -303,6 +322,48 @@ setup_worktree() {
         echo -e "${RED}⚠️  Git hooksのセットアップに失敗しました${NC}"
     fi
 
+    # 9. MinIOを起動
+    echo -e "${YELLOW}MinIOを起動しています...${NC}"
+    
+    # MinIOコマンドの存在確認
+    if ! command -v minio >/dev/null 2>&1; then
+        echo -e "${RED}⚠️  MinIOがインストールされていません${NC}"
+        echo -e "${YELLOW}   Homebrewでインストール: brew install minio${NC}"
+        echo -e "${YELLOW}   手動インストール: https://min.io/download${NC}"
+        echo -e "${YELLOW}   MinIOは後で手動で起動してください${NC}"
+    else
+        # .env.localの環境変数を読み込む
+        source .env.local
+        
+        # ポートが使用されていないか確認
+        if lsof -i :$DEV_MINIO_PORT >/dev/null 2>&1; then
+            echo -e "${RED}⚠️  ポート $DEV_MINIO_PORT は既に使用されています${NC}"
+            echo -e "${YELLOW}   MinIOは後で手動で起動してください${NC}"
+        else
+            # MinIOを起動
+            nohup minio server "$DEV_MINIO_DATA_DIR" \
+                --address ":$DEV_MINIO_PORT" \
+                --console-address ":$DEV_MINIO_CONSOLE_PORT" \
+                > minio.log 2>&1 &
+            
+            # PIDを保存
+            echo $! > .minio.pid
+            sleep 3
+            
+            # 起動確認
+            if kill -0 $(cat .minio.pid) 2>/dev/null; then
+                echo -e "${GREEN}✅ MinIOが起動しました${NC}"
+                echo -e "${GREEN}   API: http://localhost:$DEV_MINIO_PORT${NC}"
+                echo -e "${GREEN}   Console: http://localhost:$DEV_MINIO_CONSOLE_PORT${NC}"
+                echo -e "${GREEN}   ユーザー: minioadmin / minioadmin${NC}"
+            else
+                echo -e "${RED}❌ MinIOの起動に失敗しました${NC}"
+                echo -e "${YELLOW}   ログを確認: cat minio.log${NC}"
+                rm -f .minio.pid
+            fi
+        fi
+    fi
+
     # プロジェクトルートに戻る
     cd "$PROJECT_ROOT"
 
@@ -325,11 +386,31 @@ echo ""
 echo -e "${BLUE}環境設定:${NC}"
 echo -e "${BLUE}  データベース: $DB_NAME${NC}"
 echo -e "${BLUE}  MinIOデータ: $MINIO_DATA_DIR${NC}"
-echo ""
-echo -e "${YELLOW}MinIOを起動する場合:${NC}"
-echo -e "${YELLOW}  cd $WORKTREE_PATH${NC}"
-echo -e "${YELLOW}  source .env.local${NC}"
-echo -e "${YELLOW}  minio server \"\$DEV_MINIO_DATA_DIR\" --address \":\$DEV_MINIO_PORT\" --console-address \":\$DEV_MINIO_CONSOLE_PORT\"${NC}"
+
+# ワークツリー内の.env.localから実際のポート番号を取得
+if [ -f "$WORKTREE_PATH/.env.local" ]; then
+    ACTUAL_MINIO_PORT=$(grep "^DEV_MINIO_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
+    ACTUAL_MINIO_CONSOLE_PORT=$(grep "^DEV_MINIO_CONSOLE_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
+    ACTUAL_DRIZZLE_PORT=$(grep "^DRIZZLE_STUDIO_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
+    
+    echo ""
+    echo -e "${YELLOW}MinIO:${NC}"
+    
+    # MinIOの状態を確認
+    if [ -f "$WORKTREE_PATH/.minio.pid" ] && kill -0 $(cat "$WORKTREE_PATH/.minio.pid") 2>/dev/null; then
+        echo -e "${YELLOW}  ステータス: 起動済み${NC}"
+        echo -e "${YELLOW}  API: http://localhost:$ACTUAL_MINIO_PORT${NC}"
+        echo -e "${YELLOW}  Console: http://localhost:$ACTUAL_MINIO_CONSOLE_PORT${NC}"
+    else
+        echo -e "${YELLOW}  ステータス: 未起動${NC}"
+        echo -e "${YELLOW}  起動コマンド: cd $WORKTREE_PATH && source .env.local && minio server \"\$DEV_MINIO_DATA_DIR\" --address \":\$DEV_MINIO_PORT\" --console-address \":\$DEV_MINIO_CONSOLE_PORT\"${NC}"
+    fi
+    
+    echo ""
+    echo -e "${YELLOW}Drizzle Studio:${NC}"
+    echo -e "${YELLOW}  ポート: $ACTUAL_DRIZZLE_PORT${NC}"
+    echo -e "${YELLOW}  起動コマンド: cd $WORKTREE_PATH && pnpm db:studio${NC}"
+fi
 echo ""
 echo -e "${BLUE}現在のworktree一覧:${NC}"
 git worktree list
