@@ -11,6 +11,26 @@ This file provides guidance when working with code in this repository.
 - ✅ **Correct**: Execute search queries one after another
 - ❌ **Incorrect**: Running multiple `mcp__brave-search__brave_web_search` calls simultaneously
 
+## Development Environment Setup
+
+### Initial Setup
+
+- **PostgreSQL**: Install via Homebrew (`brew install postgresql@16`)
+- **MinIO**: Install via Homebrew (`brew install minio`)
+- **Auto Setup**: Run `.document/scripts/setup-development-environment.sh`
+  - Creates PostgreSQL database automatically
+  - Generates unique port numbers to avoid conflicts
+  - Updates environment variables and next.config.ts
+
+### Environment Variables
+
+- **Database**: `DATABASE_URL` - PostgreSQL connection string
+- **Storage (Dev)**: 
+  - `DEV_MINIO_PORT` - MinIO API port (auto-generated)
+  - `DEV_MINIO_CONSOLE_PORT` - MinIO console port (auto-generated)
+  - `NEXT_PUBLIC_SUPABASE_URL` - Points to MinIO in development
+- **Storage (Prod)**: Uses Supabase Storage with proper credentials
+
 ## Development Commands
 
 ### Code Quality & Validation
@@ -50,7 +70,8 @@ When using dev3000 for development monitoring:
 - **Language**: TypeScript strict mode, path alias `@/*` → `./src/*`
 - **Styling**: Tailwind CSS v4
 - **UI**: Radix UI primitives with shadcn/ui pattern
-- **Database**: Supabase Local + Drizzle ORM
+- **Database**: PostgreSQL (Homebrew) + Drizzle ORM
+- **Storage**: MinIO (S3互換) for development, Supabase Storage for production
 - **Authentication**: Better Auth with email/password
 - **Forms**: React Hook Form + Zod + next-safe-action
 - **State**: Zustand for client-side state
@@ -78,7 +99,8 @@ When using dev3000 for development monitoring:
   - `queries/` - Data fetching logic
   - `schemas/` - Zod validation schemas
   - `services/` - Business services (auth, email, image upload)
-  - `supabase/` - Supabase client and storage utilities
+  - `storage/` - Unified storage interface (MinIO for dev, Supabase for prod)
+  - `supabase/` - Supabase client utilities (production only)
   - `usecases/` - Application business logic
   - `utils/` - Utility functions and helpers
 - `test/` - Test utilities and helpers (Vitest)
