@@ -17,8 +17,8 @@
 - **Framework**: Next.js 15.5 (App Router) + React 19
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS v4 + shadcn/ui
-- **Database**: Supabase + Drizzle ORM
-- **Storage**: Supabase Storage (画像アップロード、ファイル管理)
+- **Database**: PostgreSQL (ローカル) / Supabase (本番) + Drizzle ORM
+- **Storage**: MinIO (ローカル) / Supabase Storage (本番)
 - **Authentication**: Better Auth
 - **Forms**: React Hook Form + Zod + next-safe-action
 - **Testing**: Vitest + React Testing Library + Playwright (E2E)
@@ -30,53 +30,72 @@
 
 - Node.js v22.15.1以上
 - pnpm v9.0.0以上
-- Docker Desktop
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- PostgreSQL 16以上
+- MinIO (ローカルストレージ)
+- MinIO Client (mc)
+- [Claude Code](https://code.claude.ai/) (推奨)
 
 ### セットアップ
 
 ```bash
-# 1. 依存関係のインストール
+# 1. 開発環境のセットアップ（初回のみ）
+# Claude Codeでカスタムコマンドを実行
+/project/setup-environment
+
+# このコマンドは以下を自動実行：
+# - 環境変数ファイル(.env.local)の作成
+# - PostgreSQLデータベースの作成
+# - MinIOストレージの設定
+# - Claude Code MCPの設定
+# - Drizzle Studioポート設定
+
+# 2. 依存関係のインストール
 pnpm install
 
-# 2. lefthookのセットアップ
+# 3. Git hooks（Lefthook）のセットアップ
 pnpm lefthook install
 
-# 3. Supabase Localの起動
-supabase start
-
-# 4. 環境変数の設定
-cp .env.local.example .env.local
-# .env.localを編集し、supabase statusの情報を設定
-
-# 5. データベースのセットアップ
+# 4. データベースのマイグレーション
 pnpm db:migrate:dev
-
-# 6. 開発サーバーの起動（dev3000を使用）
-pnpm dev  # dev3000による標準起動（デバッグ情報収集機能付き）
-
-# または従来のNext.js開発サーバー
-pnpm dev:next  # turbopackを使用した高速開発サーバー
 ```
 
-#### dev3000について
+### ストレージの起動（必要な時のみ）
+```bash
+# Claude Codeでカスタムコマンドを実行
+/dev/setup-storage
+```
 
-dev3000は開発中のWebアプリケーションのデバッグ情報を包括的に収集するVercel製のツールです。サーバーログ、ブラウザイベント、コンソールメッセージ、ネットワークリクエスト、自動スクリーンショットを統一されたタイムラインで記録し、AI（Claude）によるデバッグ支援を可能にします。
-
-**ポートオプション**: 異なるポートで起動する場合は `--port` オプションを使用できます：
+### 開発サーバーの起動
 
 ```bash
-pnpm dev --port 3001  # ポート3001で起動
+# 開発サーバーの起動
+dev3000  # デバッグ情報収集機能付き開発サーバー
+
+# ワークツリーで異なるポートで起動する場合（ポート競合回避）
+dev3000 --port 3001 --mcp-port 3685
+
+# または従来のNext.js開発サーバー
+pnpm dev  # turbopackを使用した高速開発サーバー
 ```
 
 ### 必須環境変数
 
 ```bash
-# .env.local（.env.local.exampleを参照）
+# .env.local（setup-development-environment.shで自動生成）
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-NEXT_PUBLIC_SUPABASE_URL="http://localhost:54321"
-SUPABASE_SERVICE_ROLE_KEY=<supabase statusから取得>
-DATABASE_URL="postgresql://postgres:postgres@localhost:54322/postgres"
+
+# ローカルストレージ設定（MinIO）
+NEXT_PUBLIC_SUPABASE_URL="http://localhost:xxxxx"  # MinIO APIポート
+SUPABASE_SERVICE_ROLE_KEY="minioadmin"
+DEV_MINIO_PORT=xxxxx         # プロジェクト固有のポート
+DEV_MINIO_CONSOLE_PORT=xxxxx # プロジェクト固有のポート
+DEV_MINIO_DATA_DIR="./dev-minio-xxxxxxxx"
+
+# データベース設定（PostgreSQL）
+DATABASE_URL="postgresql://localhost:5432/プロジェクト名_main_dev"
+DRIZZLE_STUDIO_PORT=xxxxx    # プロジェクト固有のポート
+
+# 認証・外部サービス
 BETTER_AUTH_SECRET=<openssl rand -base64 32 で生成>
 RESEND_API_KEY=<Resendダッシュボードから取得>
 LINE_LOGIN_CHANNEL_ID=<LINE Developersから取得>
@@ -96,8 +115,8 @@ LINE_LOGIN_CHANNEL_SECRET=<LINE Developersから取得>
 
 ```bash
 # 開発
-pnpm dev                    # dev3000による開発サーバー起動（デバッグ機能付き）
-pnpm dev:next              # turbopackによる高速開発サーバー
+dev3000                     # dev3000による開発サーバー起動（デバッグ機能付き）
+pnpm dev                    # turbopackによる高速開発サーバー
 pnpm build                  # プロダクションビルド
 
 # コード品質
@@ -107,6 +126,7 @@ pnpm check:all             # すべてのチェック
 
 # データベース
 pnpm db:migrate:dev        # データベースのマイグレーション
+pnpm db:studio             # Drizzle Studio起動（DB管理UI）
 
 # テスト
 pnpm test:unit             # ユニットテスト
@@ -164,7 +184,7 @@ e2e/                       # E2Eテスト (Playwright)
 #### **`ci.yml`** - メインCI
 - 🔍 **Lint & Type Check**: Biome + TypeScript
 - 🧪 **Unit Tests**: Vitest単体テスト
-- 🔗 **Integration Tests**: PGLite統合テスト  
+- 🔗 **Integration Tests**: PGLite統合テスト
 - 🏗️ **Build**: Next.js本番ビルド
 
 #### **`e2e.yml`** - E2Eテスト
@@ -172,7 +192,7 @@ e2e/                       # E2Eテスト (Playwright)
 - 📱 **Multi-browser**: Chromium対応
 - 📊 **Test Artifacts**: 失敗時のスクリーンショット・動画保存
 
-#### **`security.yml`** - セキュリティ監査  
+#### **`security.yml`** - セキュリティ監査
 - 🔒 **Dependency Audit**: 依存関係の脆弱性チェック
 - ⏰ **Scheduled**: 毎週月曜日自動実行
 
@@ -217,25 +237,38 @@ e2e/                       # E2Eテスト (Playwright)
 
 ## トラブルシューティング
 
-### Supabase Localが起動しない
+### PostgreSQLが起動しない
 
 ```bash
-# Dockerが起動しているか確認
-docker ps
+# PostgreSQLの状態確認
+brew services list | grep postgresql
 
-# Supabaseを再起動
-supabase stop
-supabase start
+# PostgreSQLを起動
+brew services start postgresql@17
+```
+
+### MinIOが起動しない
+
+```bash
+# ポートの使用状況を確認
+lsof -i :9024
+
+# MinIOプロセスを確認
+ps aux | grep minio
+
+# MinIOを再起動
+source .env.local
+minio server "$DEV_MINIO_DATA_DIR" --address ":$DEV_MINIO_PORT" --console-address ":$DEV_MINIO_CONSOLE_PORT"
 ```
 
 ### データベース接続エラー
 
 ```bash
-# 接続情報を確認
-supabase status
+# データベースの存在確認
+psql -U $USER -l
 
-# ローカル: ポート54322を使用
-# 本番: Connection Pooler (ポート6543)を使用
+# ローカル: ポート5432を使用
+# 本番: Supabase Connection Pooler (ポート6543)を使用
 ```
 
 ### Better Auth エラー

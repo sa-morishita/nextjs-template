@@ -4,8 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:minio": "(source .env.local && minio server \"$DEV_MINIO_DATA_DIR\" --address \":$DEV_MINIO_PORT\" --console-address \":$DEV_MINIO_CONSOLE_PORT\" > /tmp/minio.log 2>&1 & echo $! > .minio.pid) 2>/dev/null || true",
-    "dev:stop": "kill $(cat .minio.pid) 2>/dev/null && rm .minio.pid || true",
     "build": "next build",
     "start": "next start",
     "lint": "biome lint --write --unsafe",

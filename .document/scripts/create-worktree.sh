@@ -145,8 +145,7 @@ EOF
     cat >> "$temp_file" << EOF
   ],
   "settings": {
-    "typescript.preferences.root": "Main",
-    "biome.lspBin": "Main/node_modules/@biomejs/biome/bin/biome",
+    "biome.lsp.bin": "Main/node_modules/@biomejs/biome/bin/biome",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "biomejs.biome",
     "editor.codeActionsOnSave": {
@@ -187,7 +186,7 @@ setup_worktree() {
 
     # 1. 全ての.env*ファイルのコピー
     echo -e "${YELLOW}環境設定をコピーしています...${NC}"
-    
+
     # .env*ファイルをすべてコピー
     ENV_FILES_COPIED=0
     for env_file in ../../.env*; do
@@ -198,7 +197,7 @@ setup_worktree() {
             ENV_FILES_COPIED=$((ENV_FILES_COPIED + 1))
         fi
     done
-    
+
     # .env*ファイルが見つからない場合のフォールバック
     if [ $ENV_FILES_COPIED -eq 0 ]; then
         echo -e "${RED}⚠️  .env*ファイルが見つかりません。手動で設定してください${NC}"
@@ -212,13 +211,13 @@ setup_worktree() {
 
     # 2. プロジェクト名を取得
     PROJECT_NAME=$(basename "$PROJECT_ROOT")
-    
+
     # 3. ワークツリー専用のデータベースを作成
     echo -e "${YELLOW}ワークツリー専用のPostgreSQLデータベースを作成しています...${NC}"
-    
+
     # データベース名を生成（ハイフンをアンダースコアに変換）
     DB_NAME="${PROJECT_NAME//-/_}_${WORKTREE_NAME//-/_}_dev"
-    
+
     # PostgreSQLが起動しているか確認
     if command -v psql &> /dev/null; then
         # データベースが既に存在するか確認
@@ -243,10 +242,10 @@ setup_worktree() {
 
     # 4. ワークツリー専用のMinIOデータディレクトリを作成
     echo -e "${YELLOW}ワークツリー専用のMinIOストレージを準備しています...${NC}"
-    
+
     # ワークツリー内にMinIOデータディレクトリを作成
     MINIO_DATA_DIR="./minio-data"
-    
+
     # MinIOデータディレクトリを作成
     if [ ! -d "$MINIO_DATA_DIR" ]; then
         mkdir -p "$MINIO_DATA_DIR"
@@ -258,7 +257,7 @@ setup_worktree() {
     # 5. .env.localの環境変数を更新
     if [ -f ".env.local" ]; then
         echo -e "${YELLOW}.env.localの環境変数を更新しています...${NC}"
-        
+
         # ワークツリー名のハッシュから固有のポート番号を生成
         # ベースポート: 9100 (API), 9200 (Console)
         HASH_NUM=$(echo -n "$WORKTREE_NAME" | cksum | cut -d' ' -f1)
@@ -266,10 +265,16 @@ setup_worktree() {
         PORT_OFFSET=$((100 + ($HASH_NUM % 900)))
         MINIO_API_PORT=$((9000 + $PORT_OFFSET))
         MINIO_CONSOLE_PORT=$((9100 + $PORT_OFFSET))
-        
+
         # Drizzle Studioポート（5000-5999の範囲）
         DRIZZLE_STUDIO_PORT=$((5000 + ($HASH_NUM % 1000)))
-        
+
+        # Next.jsデベロップメントサーバーポート（3001-3999の範囲）
+        NEXTJS_PORT=$((3001 + ($HASH_NUM % 999)))
+
+        # dev3000 MCPポート（3600-4599の範囲）
+        DEV3000_MCP_PORT=$((3600 + ($HASH_NUM % 1000)))
+
         # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
         if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
@@ -278,6 +283,7 @@ setup_worktree() {
             sed -i '' "s|^DEV_MINIO_PORT=.*|DEV_MINIO_PORT=$MINIO_API_PORT|" .env.local
             sed -i '' "s|^DEV_MINIO_CONSOLE_PORT=.*|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.local
             sed -i '' "s|^DRIZZLE_STUDIO_PORT=.*|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" .env.local
+            sed -i '' "s|^NEXT_PUBLIC_SITE_URL=.*|NEXT_PUBLIC_SITE_URL=http://localhost:$NEXTJS_PORT|" .env.local
         else
             # Linux
             sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" .env.local
@@ -285,14 +291,16 @@ setup_worktree() {
             sed -i "s|^DEV_MINIO_PORT=.*|DEV_MINIO_PORT=$MINIO_API_PORT|" .env.local
             sed -i "s|^DEV_MINIO_CONSOLE_PORT=.*|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.local
             sed -i "s|^DRIZZLE_STUDIO_PORT=.*|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" .env.local
+            sed -i "s|^NEXT_PUBLIC_SITE_URL=.*|NEXT_PUBLIC_SITE_URL=http://localhost:$NEXTJS_PORT|" .env.local
         fi
-        
+
         echo -e "${GREEN}✅ .env.localの環境変数を更新しました${NC}"
         echo -e "${BLUE}  DATABASE_URL: postgresql://localhost:5432/$DB_NAME${NC}"
         echo -e "${BLUE}  DEV_MINIO_DATA_DIR: $MINIO_DATA_DIR${NC}"
         echo -e "${BLUE}  DEV_MINIO_PORT: $MINIO_API_PORT${NC}"
         echo -e "${BLUE}  DEV_MINIO_CONSOLE_PORT: $MINIO_CONSOLE_PORT${NC}"
         echo -e "${BLUE}  DRIZZLE_STUDIO_PORT: $DRIZZLE_STUDIO_PORT${NC}"
+        echo -e "${BLUE}  NEXT_PUBLIC_SITE_URL: http://localhost:$NEXTJS_PORT${NC}"
     fi
 
     # 6. 依存関係のインストール
@@ -314,17 +322,35 @@ setup_worktree() {
         echo "   手動で実行してください: pnpm db:migrate:dev"
     fi
 
-    # 8. Git hooksのセットアップ
-    echo -e "${YELLOW}Git hooksをセットアップしています...${NC}"
-    if pnpm run prepare; then
-        echo -e "${GREEN}✅ Git hooks（Lefthook）のセットアップが完了しました${NC}"
+    # 8. next.config.tsのMinIOポート番号を更新
+    echo -e "${YELLOW}next.config.tsのMinIOポート番号を更新しています...${NC}"
+
+    # next.config.tsファイルが存在するか確認
+    if [ -f "next.config.ts" ]; then
+        # 現在のポート設定を確認
+        if grep -q "port: '$MINIO_API_PORT'" next.config.ts; then
+            echo -e "${YELLOW}⏭️  next.config.tsのMinIOポートは既に更新されています${NC}"
+        else
+            # MinIOポート番号を更新（macOS/BSD sedとGNU sedの両方に対応）
+            # protocol: 'http' と hostname: 'localhost' または '127.0.0.1' の組み合わせのみ対象
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                # macOS - localhost用のポート番号を更新
+                sed -i '' "/protocol: 'http'/,/hostname: 'localhost'/ s/port: '[0-9]*',/port: '$MINIO_API_PORT',/" next.config.ts
+                sed -i '' "/protocol: 'http'/,/hostname: '127\.0\.0\.1'/ s/port: '[0-9]*',/port: '$MINIO_API_PORT',/" next.config.ts
+            else
+                # Linux - localhost用のポート番号を更新
+                sed -i "/protocol: 'http'/,/hostname: 'localhost'/ s/port: '[0-9]*',/port: '$MINIO_API_PORT',/" next.config.ts
+                sed -i "/protocol: 'http'/,/hostname: '127\.0\.0\.1'/ s/port: '[0-9]*',/port: '$MINIO_API_PORT',/" next.config.ts
+            fi
+            echo -e "${GREEN}✅ next.config.tsのMinIOポート番号を $MINIO_API_PORT に更新しました${NC}"
+        fi
     else
-        echo -e "${RED}⚠️  Git hooksのセットアップに失敗しました${NC}"
+        echo -e "${RED}⚠️  next.config.tsファイルが見つかりません${NC}"
     fi
 
     # 9. MinIOを起動
     echo -e "${YELLOW}MinIOを起動しています...${NC}"
-    
+
     # MinIOコマンドの存在確認
     if ! command -v minio >/dev/null 2>&1; then
         echo -e "${RED}⚠️  MinIOがインストールされていません${NC}"
@@ -334,7 +360,7 @@ setup_worktree() {
     else
         # .env.localの環境変数を読み込む
         source .env.local
-        
+
         # ポートが使用されていないか確認
         if lsof -i :$DEV_MINIO_PORT >/dev/null 2>&1; then
             echo -e "${RED}⚠️  ポート $DEV_MINIO_PORT は既に使用されています${NC}"
@@ -345,11 +371,11 @@ setup_worktree() {
                 --address ":$DEV_MINIO_PORT" \
                 --console-address ":$DEV_MINIO_CONSOLE_PORT" \
                 > minio.log 2>&1 &
-            
+
             # PIDを保存
             echo $! > .minio.pid
             sleep 3
-            
+
             # 起動確認
             if kill -0 $(cat .minio.pid) 2>/dev/null; then
                 echo -e "${GREEN}✅ MinIOが起動しました${NC}"
@@ -361,6 +387,57 @@ setup_worktree() {
                 echo -e "${YELLOW}   ログを確認: cat minio.log${NC}"
                 rm -f .minio.pid
             fi
+        fi
+    fi
+
+    # 10. MinIOバケットを作成
+    echo -e "${YELLOW}MinIOバケットを作成しています...${NC}"
+
+    # MinIO Clientコマンドの存在確認
+    if ! command -v mc >/dev/null 2>&1; then
+        echo -e "${RED}⚠️  MinIO Client (mc) がインストールされていません${NC}"
+        echo -e "${YELLOW}   Homebrewでインストール: brew install minio-mc${NC}"
+        echo -e "${YELLOW}   バケットは手動で作成してください${NC}"
+    else
+        # MinIOが起動していることを確認
+        if [ -f ".minio.pid" ] && kill -0 $(cat .minio.pid) 2>/dev/null; then
+            # .env.localから環境変数を読み込む
+            source .env.local
+
+            # MinIOエイリアスを設定
+            mc alias set worktree-minio http://localhost:$DEV_MINIO_PORT minioadmin minioadmin >/dev/null 2>&1
+
+            # bucket-config.tsからバケット名を抽出
+            BUCKET_CONFIG_FILE="../../src/lib/domain/storage/bucket-config.ts"
+            if [ -f "$BUCKET_CONFIG_FILE" ]; then
+                # BUCKET_CONFIGSからバケット名を抽出（name: 'xxx'の形式を探す）
+                BUCKETS=$(grep -E "^\s+name:\s*['\"]" "$BUCKET_CONFIG_FILE" | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/" | sort -u)
+
+                if [ -n "$BUCKETS" ]; then
+                    echo -e "${BLUE}定義されているバケット:${NC}"
+                    for BUCKET in $BUCKETS; do
+                        # バケットが既に存在するか確認
+                        if mc ls worktree-minio/$BUCKET >/dev/null 2>&1; then
+                            echo -e "${YELLOW}  ⏭️  $BUCKET (既に存在)${NC}"
+                        else
+                            # バケットを作成
+                            if mc mb worktree-minio/$BUCKET >/dev/null 2>&1; then
+                                # パブリックアクセスを設定
+                                mc anonymous set public worktree-minio/$BUCKET >/dev/null 2>&1
+                                echo -e "${GREEN}  ✅ $BUCKET (作成完了)${NC}"
+                            else
+                                echo -e "${RED}  ❌ $BUCKET (作成失敗)${NC}"
+                            fi
+                        fi
+                    done
+                else
+                    echo -e "${YELLOW}⚠️  bucket-config.tsにバケット定義が見つかりません${NC}"
+                fi
+            else
+                echo -e "${YELLOW}⚠️  bucket-config.tsファイルが見つかりません${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠️  MinIOが起動していないため、バケット作成をスキップします${NC}"
         fi
     fi
 
@@ -386,16 +463,31 @@ echo ""
 echo -e "${BLUE}環境設定:${NC}"
 echo -e "${BLUE}  データベース: $DB_NAME${NC}"
 echo -e "${BLUE}  MinIOデータ: $MINIO_DATA_DIR${NC}"
+echo -e "${BLUE}  MinIOバケット: bucket-config.tsから自動作成${NC}"
 
 # ワークツリー内の.env.localから実際のポート番号を取得
 if [ -f "$WORKTREE_PATH/.env.local" ]; then
     ACTUAL_MINIO_PORT=$(grep "^DEV_MINIO_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
     ACTUAL_MINIO_CONSOLE_PORT=$(grep "^DEV_MINIO_CONSOLE_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
     ACTUAL_DRIZZLE_PORT=$(grep "^DRIZZLE_STUDIO_PORT=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2)
-    
+    ACTUAL_NEXTJS_PORT=$(grep "^NEXT_PUBLIC_SITE_URL=" "$WORKTREE_PATH/.env.local" | cut -d'=' -f2 | sed 's|http://localhost:||')
+
+    # dev3000 MCPポートを計算（環境変数のハッシュから）
+    WORKTREE_HASH=$(echo -n "$WORKTREE_NAME" | cksum | cut -d' ' -f1)
+    ACTUAL_DEV3000_MCP_PORT=$((3600 + ($WORKTREE_HASH % 1000)))
+
+    echo ""
+    echo -e "${YELLOW}開発サーバー:${NC}"
+    echo -e "${YELLOW}  Next.js: http://localhost:$ACTUAL_NEXTJS_PORT${NC}"
+    echo -e "${YELLOW}  起動コマンド: cd $WORKTREE_PATH && pnpm dev --port $ACTUAL_NEXTJS_PORT${NC}"
+
+    echo ""
+    echo -e "${YELLOW}dev3000 (AI開発ツール):${NC}"
+    echo -e "${YELLOW}  起動コマンド: cd $WORKTREE_PATH && dev3000 --port $ACTUAL_NEXTJS_PORT --mcp-port $ACTUAL_DEV3000_MCP_PORT${NC}"
+
     echo ""
     echo -e "${YELLOW}MinIO:${NC}"
-    
+
     # MinIOの状態を確認
     if [ -f "$WORKTREE_PATH/.minio.pid" ] && kill -0 $(cat "$WORKTREE_PATH/.minio.pid") 2>/dev/null; then
         echo -e "${YELLOW}  ステータス: 起動済み${NC}"
@@ -405,7 +497,7 @@ if [ -f "$WORKTREE_PATH/.env.local" ]; then
         echo -e "${YELLOW}  ステータス: 未起動${NC}"
         echo -e "${YELLOW}  起動コマンド: cd $WORKTREE_PATH && source .env.local && minio server \"\$DEV_MINIO_DATA_DIR\" --address \":\$DEV_MINIO_PORT\" --console-address \":\$DEV_MINIO_CONSOLE_PORT\"${NC}"
     fi
-    
+
     echo ""
     echo -e "${YELLOW}Drizzle Studio:${NC}"
     echo -e "${YELLOW}  ポート: $ACTUAL_DRIZZLE_PORT${NC}"

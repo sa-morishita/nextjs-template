@@ -86,7 +86,11 @@
       "Bash(brew services:*)",
       "mcp__playwright__browser_install",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright__browser_click"
+      "mcp__playwright__browser_click",
+      "Bash(claude mcp:*)",
+      "Bash(mc mb:*)",
+      "Bash(mc anonymous set:*)",
+      "Bash(mc ls:*)"
     ],
     "deny": []
   },

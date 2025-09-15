@@ -10,17 +10,25 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
         port: '',
       },
+      // Supabase Storage - Production
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      },
+      // MinIO - Local Development (direct bucket access)
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '54321',
-        pathname: '/storage/v1/object/public/**',
+        port: '19952',
+        pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: '127.0.0.1',
-        port: '54321',
-        pathname: '/storage/v1/object/public/**',
+        port: '19952',
+        pathname: '/**',
       },
     ],
   },

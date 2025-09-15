@@ -111,12 +111,12 @@ if [ -f "$WORKTREE_FULL_PATH/.minio.pid" ]; then
         echo -e "${YELLOW}MinIOを停止しています...${NC}"
         kill $PID
         sleep 2
-        
+
         # 強制終了が必要な場合
         if kill -0 $PID 2>/dev/null; then
             kill -9 $PID
         fi
-        
+
         echo -e "${GREEN}✅ MinIOを停止しました${NC}"
     else
         echo -e "${YELLOW}MinIOプロセスが見つかりません（PID: $PID）${NC}"
@@ -137,12 +137,24 @@ fi
 
 # まずgit worktree removeを試す
 if git worktree remove "$WORKTREE_PATH" 2>/dev/null; then
-    echo -e "${GREEN}✅ worktreeが正常に削除されました${NC}"
+    echo -e "${GREEN}✅ worktreeがGitから削除されました${NC}"
+    # ディレクトリが実際に削除されたか確認
+    if [ -d "$WORKTREE_FULL_PATH" ]; then
+        echo -e "${YELLOW}ディレクトリがまだ存在します。完全に削除します...${NC}"
+        rm -rf "$WORKTREE_FULL_PATH"
+        echo -e "${GREEN}✅ ディレクトリを完全に削除しました${NC}"
+    fi
 else
     # 強制削除オプションを使用
     echo -e "${YELLOW}通常の削除に失敗しました。強制削除を試みます...${NC}"
     if git worktree remove --force "$WORKTREE_PATH" 2>/dev/null; then
-        echo -e "${GREEN}✅ worktreeが強制的に削除されました${NC}"
+        echo -e "${GREEN}✅ worktreeがGitから削除されました${NC}"
+        # ディレクトリが実際に削除されたか確認
+        if [ -d "$WORKTREE_FULL_PATH" ]; then
+            echo -e "${YELLOW}ディレクトリがまだ存在します。完全に削除します...${NC}"
+            rm -rf "$WORKTREE_FULL_PATH"
+            echo -e "${GREEN}✅ ディレクトリを完全に削除しました${NC}"
+        fi
     else
         # 手動削除とprune
         echo -e "${YELLOW}Git経由の削除に失敗しました。手動で削除します...${NC}"
@@ -164,7 +176,7 @@ if command -v psql &> /dev/null; then
         # データベースへの接続を切断
         echo -e "${YELLOW}データベースへの接続を切断しています...${NC}"
         psql -U $USER -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
-        
+
         # データベースを削除
         if dropdb "$DB_NAME" 2>/dev/null; then
             echo -e "${GREEN}✅ データベース '$DB_NAME' を削除しました${NC}"
@@ -221,8 +233,7 @@ EOF
     cat >> "$temp_file" << EOF
   ],
   "settings": {
-    "typescript.preferences.root": "Main",
-    "biome.lspBin": "Main/node_modules/@biomejs/biome/bin/biome",
+    "biome.lsp.bin": "Main/node_modules/@biomejs/biome/bin/biome",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "biomejs.biome",
     "editor.codeActionsOnSave": {

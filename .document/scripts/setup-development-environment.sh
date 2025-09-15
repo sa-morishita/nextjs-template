@@ -278,7 +278,34 @@ else
     echo "⚠️  package.jsonファイルが見つかりません"
 fi
 
-# 13. 完了メッセージ
+# 13. next.config.tsのMinIOポート番号を更新
+echo ""
+echo "🔧 next.config.tsのMinIOポート番号を更新しています..."
+
+# next.config.tsファイルが存在するか確認
+if [ -f "next.config.ts" ]; then
+    # 現在のポート設定を確認
+    if grep -q "port: '$MINIO_PORT'" next.config.ts; then
+        echo "⏭️  next.config.tsのMinIOポートは既に更新されています"
+    else
+        # MinIOポート番号を更新（macOS/BSD sedとGNU sedの両方に対応）
+        # protocol: 'http' と hostname: 'localhost' または '127.0.0.1' の組み合わせのみ対象
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS - localhost用のポート番号を更新
+            sed -i '' "/protocol: 'http'/,/hostname: 'localhost'/ s/port: '[0-9]*',/port: '$MINIO_PORT',/" next.config.ts
+            sed -i '' "/protocol: 'http'/,/hostname: '127\.0\.0\.1'/ s/port: '[0-9]*',/port: '$MINIO_PORT',/" next.config.ts
+        else
+            # Linux - localhost用のポート番号を更新
+            sed -i "/protocol: 'http'/,/hostname: 'localhost'/ s/port: '[0-9]*',/port: '$MINIO_PORT',/" next.config.ts
+            sed -i "/protocol: 'http'/,/hostname: '127\.0\.0\.1'/ s/port: '[0-9]*',/port: '$MINIO_PORT',/" next.config.ts
+        fi
+        echo "✅ next.config.tsのMinIOポート番号を $MINIO_PORT に更新しました"
+    fi
+else
+    echo "⚠️  next.config.tsファイルが見つかりません"
+fi
+
+# 14. 完了メッセージ
 echo ""
 echo "🎉 セットアップが完了しました！"
 echo ""
