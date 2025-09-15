@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
-import { supabaseAdmin } from '@/lib/supabase/storage';
+import { storage } from '@/lib/storage/client';
 
 interface UploadProfileImageResult {
   url: string | null;
@@ -48,22 +48,22 @@ export async function uploadProfileImageFromUrl(
     const timestamp = Date.now();
     const fileName = `${userId}/profile-${timestamp}.${extension}`;
 
-    // Supabase Storageにアップロード
-    const { data, error } = await supabaseAdmin.storage
-      .from('avatars')
-      .upload(fileName, blob, {
-        contentType,
-        upsert: true, // 既存のファイルがあれば上書き
-      });
+    // Storageにアップロード
+    const { data, error } = await storage.avatars.upload(fileName, blob, {
+      contentType,
+      upsert: true, // 既存のファイルがあれば上書き
+    });
 
     if (error) {
       throw error;
     }
 
+    if (!data) {
+      throw new Error('Upload failed: No data returned');
+    }
+
     // 公開URLを生成
-    const { data: publicUrlData } = supabaseAdmin.storage
-      .from('avatars')
-      .getPublicUrl(data.path);
+    const publicUrlResult = await storage.avatars.getPublicUrl(data.path);
 
     // アップロード成功後、古い画像を削除（非同期で実行）
     deleteOldProfileImages(userId).catch((error) => {
@@ -72,7 +72,7 @@ export async function uploadProfileImageFromUrl(
     });
 
     return {
-      url: publicUrlData.publicUrl,
+      url: publicUrlResult.data.publicUrl,
       error: null,
     };
   } catch (error) {
@@ -119,12 +119,13 @@ function getImageExtension(contentType: string): string | null {
 export async function deleteOldProfileImages(userId: string): Promise<void> {
   try {
     // ユーザーのディレクトリ内のファイルを一覧取得
-    const { data: files, error: listError } = await supabaseAdmin.storage
-      .from('avatars')
-      .list(`${userId}`, {
+    const { data: files, error: listError } = await storage.avatars.list(
+      `${userId}`,
+      {
         limit: 100,
         sortBy: { column: 'created_at', order: 'desc' }, // 新しい順に並べ替え
-      });
+      },
+    );
 
     if (listError) {
       console.error('Failed to list profile images:', listError);
@@ -144,9 +145,7 @@ export async function deleteOldProfileImages(userId: string): Promise<void> {
       `Deleting ${filesToDelete.length} old profile images for user ${userId}`,
     );
 
-    const { error: deleteError } = await supabaseAdmin.storage
-      .from('avatars')
-      .remove(filesToDelete);
+    const { error: deleteError } = await storage.avatars.remove(filesToDelete);
 
     if (deleteError) {
       console.error('Failed to delete old profile images:', deleteError);

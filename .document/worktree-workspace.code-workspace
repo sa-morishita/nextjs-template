@@ -2,24 +2,24 @@
   "folders": [
     {
       "name": "Main",
-      "path": ".."
-    }
+      "path": "..",
+    },
   ],
   "settings": {
     "typescript.preferences.root": "Main",
-    "biome.lspBin": "Main/node_modules/@biomejs/biome/bin/biome",
+    "biome.lsp.bin": "Main/node_modules/@biomejs/biome/bin/biome",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "biomejs.biome",
     "editor.codeActionsOnSave": {
       "quickfix.biome": "explicit",
-      "source.organizeImports.biome": "explicit"
+      "source.organizeImports.biome": "explicit",
     },
     "search.exclude": {
       "**/node_modules": true,
       "**/dist": true,
       "**/.next": true,
-      "**/supabase/.temp": true
-    }
+      "**/supabase/.temp": true,
+    },
   },
   "extensions": {
     "recommendations": [
@@ -28,7 +28,7 @@
       "ms-vscode.vscode-typescript-next",
       "unifiedjs.vscode-mdx",
       "supabase.supabase",
-      "drizzle-team.drizzle-vscode"
-    ]
-  }
+      "drizzle-team.drizzle-vscode",
+    ],
+  },
 }

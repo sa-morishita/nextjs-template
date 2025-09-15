@@ -76,10 +76,26 @@ echo "$WORKTREE_INFO"
 # 削除前にブランチ名を取得（スペースを含むパスに対応）
 BRANCH_NAME=$(echo "$WORKTREE_INFO" | grep -o '\[.*\]' | sed 's/\[//' | sed 's/\]//')
 
+# プロジェクト名を取得
+PROJECT_NAME=$(basename "$PROJECT_ROOT")
+
+# データベース名を取得（ワークツリー名から生成）
+ACTUAL_WORKTREE_NAME=$(basename "$WORKTREE_PATH")
+DB_NAME="${PROJECT_NAME//-/_}_${ACTUAL_WORKTREE_NAME//-/_}_dev"
+
+# MinIOデータディレクトリのパスを取得
+HASH=$(echo -n "$ACTUAL_WORKTREE_NAME" | shasum -a 256 | cut -c1-8)
+MINIO_DATA_DIR="$PROJECT_ROOT/dev-minio-worktree-${HASH}"
+
 # 確認プロンプト
 echo ""
 echo -e "${YELLOW}⚠️  警告: この操作は取り消せません${NC}"
-echo -e "${YELLOW}worktree '$WORKTREE_NAME' とブランチ '$BRANCH_NAME' を削除しますか？${NC}"
+echo -e "${YELLOW}以下を削除します:${NC}"
+echo -e "${YELLOW}  - worktree: $WORKTREE_PATH${NC}"
+echo -e "${YELLOW}  - ブランチ: $BRANCH_NAME${NC}"
+echo -e "${YELLOW}  - データベース: $DB_NAME${NC}"
+echo -e "${YELLOW}  - MinIOデータ: $MINIO_DATA_DIR${NC}"
+echo ""
 echo -n "削除する場合は 'yes' と入力してください: "
 read -r CONFIRMATION
 
@@ -88,31 +104,19 @@ if [ "$CONFIRMATION" != "yes" ]; then
     exit 0
 fi
 
-# Supabase Localの停止
-echo -e "${YELLOW}Supabase Localを確認しています...${NC}"
-
-# worktreeディレクトリでSupabaseが実行中か確認
-if [ -d "$WORKTREE_FULL_PATH" ] && [ -f "$WORKTREE_FULL_PATH/supabase/config.toml" ]; then
-    # worktreeディレクトリに移動
-    cd "$WORKTREE_FULL_PATH"
-
-    # Supabaseのステータスを確認
-    if command -v supabase >/dev/null 2>&1; then
-        # Supabaseが実行中か確認
-        if supabase status 2>/dev/null | grep -q "API URL"; then
-            echo -e "${YELLOW}Supabase Localが実行中です。停止しています...${NC}"
-            if supabase stop; then
-                echo -e "${GREEN}✅ Supabase Localが停止されました${NC}"
-            else
-                echo -e "${RED}⚠️  Supabase Localの停止に失敗しました${NC}"
-            fi
-        else
-            echo -e "${BLUE}Supabase Localは実行されていません${NC}"
+# MinIOプロセスが実行中か確認（該当ディレクトリを使用しているか）
+echo -e "${YELLOW}MinIOプロセスを確認しています...${NC}"
+if [ -d "$MINIO_DATA_DIR" ]; then
+    # lsofコマンドが利用可能な場合のみチェック
+    if command -v lsof >/dev/null 2>&1; then
+        if lsof "$MINIO_DATA_DIR" >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚠️  MinIOデータディレクトリが使用中です。MinIOプロセスを停止してください${NC}"
+            echo -e "${YELLOW}   使用中のプロセス:${NC}"
+            lsof "$MINIO_DATA_DIR" | head -10
+            echo ""
+            echo -e "${YELLOW}   MinIOを停止するには、該当するターミナルでCtrl+Cを押してください${NC}"
         fi
     fi
-
-    # プロジェクトルートに戻る
-    cd "$PROJECT_ROOT"
 fi
 
 # worktreeの削除
@@ -141,6 +145,46 @@ else
         git worktree prune
         echo -e "${GREEN}✅ worktreeが手動で削除されました${NC}"
     fi
+fi
+
+# PostgreSQLデータベースの削除
+echo ""
+echo -e "${YELLOW}PostgreSQLデータベースを削除しています...${NC}"
+
+if command -v psql &> /dev/null; then
+    # データベースが存在するか確認
+    if psql -U $USER -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+        # データベースへの接続を切断
+        echo -e "${YELLOW}データベースへの接続を切断しています...${NC}"
+        psql -U $USER -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
+        
+        # データベースを削除
+        if dropdb "$DB_NAME" 2>/dev/null; then
+            echo -e "${GREEN}✅ データベース '$DB_NAME' を削除しました${NC}"
+        else
+            echo -e "${RED}⚠️  データベース '$DB_NAME' の削除に失敗しました${NC}"
+            echo "   手動で削除してください: dropdb $DB_NAME"
+        fi
+    else
+        echo -e "${YELLOW}データベース '$DB_NAME' は既に削除されています${NC}"
+    fi
+else
+    echo -e "${YELLOW}PostgreSQLがインストールされていないため、データベースの削除をスキップします${NC}"
+fi
+
+# MinIOデータディレクトリの削除
+echo ""
+echo -e "${YELLOW}MinIOデータディレクトリを削除しています...${NC}"
+
+if [ -d "$MINIO_DATA_DIR" ]; then
+    if rm -rf "$MINIO_DATA_DIR"; then
+        echo -e "${GREEN}✅ MinIOデータディレクトリ '$MINIO_DATA_DIR' を削除しました${NC}"
+    else
+        echo -e "${RED}⚠️  MinIOデータディレクトリ '$MINIO_DATA_DIR' の削除に失敗しました${NC}"
+        echo "   MinIOが実行中の可能性があります。停止してから再度実行してください"
+    fi
+else
+    echo -e "${YELLOW}MinIOデータディレクトリ '$MINIO_DATA_DIR' は既に削除されています${NC}"
 fi
 
 # VSCode workspaceファイルを更新
@@ -256,46 +300,15 @@ else
     echo -e "${YELLOW}ブランチ情報が取得できませんでした${NC}"
 fi
 
-# Dockerコンテナのクリーンアップ
-if command -v docker >/dev/null 2>&1; then
-    echo ""
-    echo -e "${YELLOW}Dockerコンテナを確認しています...${NC}"
-
-    # Supabase関連のDockerコンテナを検索
-    CONTAINERS=$(docker ps -a --format "{{.Names}}" | grep -E "supabase.*${WORKTREE_NAME}" || true)
-
-    if [ -n "$CONTAINERS" ]; then
-        echo -e "${YELLOW}関連するDockerコンテナが見つかりました。削除します...${NC}"
-        echo "$CONTAINERS" | while read -r container; do
-            if docker rm -f "$container" 2>/dev/null; then
-                echo -e "${GREEN}✅ コンテナ '$container' を削除しました${NC}"
-            else
-                echo -e "${RED}⚠️  コンテナ '$container' の削除に失敗しました${NC}"
-            fi
-        done
-    else
-        echo -e "${BLUE}関連するDockerコンテナはありません${NC}"
-    fi
-
-    # Dockerボリュームのクリーンアップ
-    VOLUMES=$(docker volume ls --format "{{.Name}}" | grep -E "supabase.*${WORKTREE_NAME}" || true)
-
-    if [ -n "$VOLUMES" ]; then
-        echo -e "${YELLOW}関連するDockerボリュームが見つかりました。削除します...${NC}"
-        echo "$VOLUMES" | while read -r volume; do
-            if docker volume rm "$volume" 2>/dev/null; then
-                echo -e "${GREEN}✅ ボリューム '$volume' を削除しました${NC}"
-            else
-                echo -e "${RED}⚠️  ボリューム '$volume' の削除に失敗しました${NC}"
-            fi
-        done
-    fi
-fi
-
 # 完了メッセージ
 echo ""
-echo -e "${GREEN}処理が完了しました${NC}"
-
+echo -e "${GREEN}🎉 処理が完了しました${NC}"
+echo ""
+echo -e "${GREEN}削除されたリソース:${NC}"
+echo -e "${GREEN}  - worktree: $WORKTREE_PATH${NC}"
+echo -e "${GREEN}  - ブランチ: $BRANCH_NAME${NC}"
+echo -e "${GREEN}  - データベース: $DB_NAME${NC}"
+echo -e "${GREEN}  - MinIOデータ: $MINIO_DATA_DIR${NC}"
 echo ""
 echo "現在のworktree一覧:"
 git worktree list

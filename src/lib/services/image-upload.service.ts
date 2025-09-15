@@ -2,7 +2,11 @@
  * 画像アップロード関連のサービス
  */
 import 'server-only';
-import { supabaseAdmin } from '@/lib/supabase/storage';
+import {
+  type BucketName,
+  validateFile,
+} from '@/lib/domain/storage/bucket-config';
+import { storage } from '@/lib/storage/client';
 
 /**
  * 画像アップロード用のPresigned URL生成の入力型
@@ -12,7 +16,7 @@ export interface GenerateUploadUrlInput {
   fileName: string;
   fileType: string;
   fileSize: number;
-  bucket: 'diaries' | 'avatars'; // バケット名を指定
+  bucket: BucketName; // バケット名を指定
 }
 
 /**
@@ -34,18 +38,14 @@ export interface GenerateUploadUrlResult {
 export async function generateUploadUrl(
   input: GenerateUploadUrlInput,
 ): Promise<GenerateUploadUrlResult> {
-  // ファイル形式検証
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!validTypes.includes(input.fileType)) {
-    throw new Error(
-      'サポートされていない画像形式です。JPEG、PNG、WebPのみ対応しています。',
-    );
-  }
+  // バケット設定に基づいたファイル検証
+  const validation = validateFile(input.bucket, {
+    type: input.fileType,
+    size: input.fileSize,
+  });
 
-  // ファイルサイズ検証（5MB制限）
-  const maxSize = 5 * 1024 * 1024; // 5MB
-  if (input.fileSize > maxSize) {
-    throw new Error('画像サイズは5MB以下にしてください');
+  if (!validation.valid) {
+    throw new Error(validation.error);
   }
 
   // ファイルパス生成（ユーザーフォルダ + 日付構造）
@@ -58,20 +58,15 @@ export async function generateUploadUrl(
   const uniqueFileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
   const filePath = `${folderName}/${uniqueFileName}`;
 
-  // Presigned Upload URL生成
-  const { data, error } = await supabaseAdmin.storage
-    .from(input.bucket)
-    .createSignedUploadUrl(filePath);
+  // バケットに応じたストレージクライアントを選択
+  const storageInstance = storage[input.bucket];
 
-  if (error || !data) {
-    console.error('Signed URL generation error:', error);
-    throw new Error('アップロードURLの生成に失敗しました');
-  }
+  // Presigned Upload URL生成
+  const data = await storageInstance.createSignedUploadUrl(filePath);
 
   // 公開URL事前生成
-  const {
-    data: { publicUrl },
-  } = supabaseAdmin.storage.from(input.bucket).getPublicUrl(filePath);
+  const publicUrlResult = await storageInstance.getPublicUrl(data.path);
+  const publicUrl = publicUrlResult.data.publicUrl;
 
   return {
     signedUrl: data.signedUrl,

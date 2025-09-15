@@ -28,22 +28,24 @@ else
     WORKTREE_NAME="standalone"
 fi
 
-# プロジェクト名とワークツリー名からハッシュ生成（8文字）
-IDENTIFIER="${PROJECT_NAME}-${WORKTREE_NAME}"
+# プロジェクトのフルパスとワークツリー名からハッシュ生成（8文字）
+# フルパスを使用することで、同名プロジェクトでも異なるハッシュを生成
+IDENTIFIER="${PROJECT_PATH}-${WORKTREE_NAME}"
 HASH=$(echo -n "$IDENTIFIER" | shasum -a 256 | cut -c1-8)
 
-# PGLite設定
-PGLITE_DB_PATH="./dev-db-${HASH}.db"
+# PostgreSQL設定
+DB_NAME="${PROJECT_NAME//-/_}_${WORKTREE_NAME//-/_}_dev"  # ハイフンをアンダースコアに変換
 
-# MinIO設定（ハッシュから4桁の数値を生成してポート番号に使用）
-PORT_OFFSET=$((0x${HASH:0:4} % 1000))  # 0-999の範囲
-MINIO_PORT=$((9000 + PORT_OFFSET))
-MINIO_CONSOLE_PORT=$((9001 + PORT_OFFSET))
+# MinIO設定（ハッシュから数値を生成してポート番号に使用）
+# より多くのハッシュ文字を使用し、ポート範囲を拡大
+PORT_OFFSET=$((0x${HASH:0:6} % 10000))  # 0-9999の範囲
+MINIO_PORT=$((10000 + PORT_OFFSET))  # 10000-19999の範囲
+MINIO_CONSOLE_PORT=$((20000 + PORT_OFFSET))  # 20000-29999の範囲
 MINIO_DATA_DIR="./dev-minio-${HASH}"
 
 echo "🆔 プロジェクト識別子: $IDENTIFIER"
 echo "🔢 ハッシュ: $HASH"
-echo "📁 PGLite DB: $PGLITE_DB_PATH"
+echo "🐘 PostgreSQL DB名: $DB_NAME"
 echo "🗄️  MinIO API ポート: $MINIO_PORT"
 echo "🌐 MinIO Console ポート: $MINIO_CONSOLE_PORT"
 echo "📦 MinIO データディレクトリ: $MINIO_DATA_DIR"
@@ -65,23 +67,75 @@ for example_file in .env*.example; do
             cp "$example_file" "$env_file"
             echo "✅ $example_file → $env_file をコピーしました"
             
-            # .env.localの場合は追加設定を挿入
+            # .env.localの場合は開発環境用の値を置換
             if [ "$env_file" = ".env.local" ]; then
-                echo "" >> "$env_file"
-                echo "# PGLite & MinIO 設定（自動生成）" >> "$env_file"
-                echo "# プロジェクト識別子: $IDENTIFIER" >> "$env_file"
-                echo "DATABASE_URL=\"pglite://$PGLITE_DB_PATH\"" >> "$env_file"
-                echo "NEXT_PUBLIC_SUPABASE_URL=\"http://localhost:$MINIO_PORT\"" >> "$env_file"
-                echo "DEV_MINIO_PORT=$MINIO_PORT" >> "$env_file"
-                echo "DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT" >> "$env_file"
-                echo "DEV_MINIO_DATA_DIR=\"$MINIO_DATA_DIR\"" >> "$env_file"
-                echo "🔧 PGLite & MinIO設定を $env_file に追加しました"
+                # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    # macOS
+                    sed -i '' "s|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|" "$env_file"
+                    sed -i '' "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^SUPABASE_SERVICE_ROLE_KEY=$|SUPABASE_SERVICE_ROLE_KEY=minioadmin|" "$env_file"
+                    sed -i '' "s|^DATABASE_URL=$|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" "$env_file"
+                    sed -i '' "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
+                    sed -i '' "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                else
+                    # Linux
+                    sed -i "s|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|" "$env_file"
+                    sed -i "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i "s|^SUPABASE_SERVICE_ROLE_KEY=$|SUPABASE_SERVICE_ROLE_KEY=minioadmin|" "$env_file"
+                    sed -i "s|^DATABASE_URL=$|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" "$env_file"
+                    sed -i "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
+                    sed -i "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                fi
+                echo "🔧 開発環境用の設定値を $env_file に適用しました"
+            fi
+            
+            # .env.test.localの場合は開発環境と同じMinIOポートのみ設定
+            if [ "$env_file" = ".env.test.local" ]; then
+                # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    # macOS
+                    sed -i '' "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                else
+                    # Linux
+                    sed -i "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                fi
+                echo "🔧 テスト環境用のMinIOポートを $env_file に設定しました: $MINIO_PORT"
             fi
         fi
     fi
 done
 
-# 4. Serena MCP を追加
+# 4. PostgreSQLデータベースの作成
+echo ""
+echo "🐘 PostgreSQLデータベースを作成しています..."
+
+# PostgreSQLが起動しているか確認
+if command -v psql &> /dev/null; then
+    # データベースが既に存在するか確認
+    if psql -U $USER -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+        echo "⏭️  データベース '$DB_NAME' は既に存在するため、スキップします"
+    else
+        # データベースを作成
+        createdb "$DB_NAME"
+        if [ $? -eq 0 ]; then
+            echo "✅ データベース '$DB_NAME' を作成しました"
+        else
+            echo "❌ データベースの作成に失敗しました"
+            echo "   PostgreSQLが起動していることを確認してください:"
+            echo "   brew services start postgresql@17"
+        fi
+    fi
+else
+    echo "⚠️  PostgreSQLがインストールされていません"
+    echo "   以下のコマンドでインストールしてください:"
+    echo "   brew install postgresql@17"
+    echo "   brew services start postgresql@17"
+fi
+
+# 5. Serena MCP を追加
 echo ""
 echo "📦 Serena MCP を追加しています..."
 claude mcp add serena -- /opt/homebrew/bin/uvx --from git+https://github.com/oraios/serena serena start-mcp-server --enable-web-dashboard false --context ide-assistant --project "$PROJECT_PATH"
@@ -93,7 +147,7 @@ else
     exit 1
 fi
 
-# 5. Sentry MCP を追加
+# 6. Sentry MCP を追加
 echo ""
 echo "📦 Sentry MCP を追加しています..."
 claude mcp add --transport http sentry -s project https://mcp.sentry.dev/mcp
@@ -105,7 +159,7 @@ else
     exit 1
 fi
 
-# 6. Brave Search MCP を追加（.env.mcp.localからAPIキーを読み込み）
+# 7. Brave Search MCP を追加（.env.mcp.localからAPIキーを読み込み）
 echo ""
 echo "📦 Brave Search MCP を追加しています..."
 
@@ -136,7 +190,7 @@ else
     echo "   .env.mcp.localを作成し、BRAVE_API_KEYを設定後、再度実行してください"
 fi
 
-# 7. Context7 MCP を追加
+# 8. Context7 MCP を追加
 echo ""
 echo "📦 Context7 MCP を追加しています..."
 claude mcp add --transport http context7 -s project https://mcp.context7.com/mcp
@@ -148,7 +202,7 @@ else
     exit 1
 fi
 
-# 8. Playwright MCP を追加
+# 9. Playwright MCP を追加
 echo ""
 echo "📦 Playwright MCP を追加しています..."
 claude mcp add playwright -s project -- npx -y @playwright/mcp@latest
@@ -160,7 +214,7 @@ else
     exit 1
 fi
 
-# 9. AI統合 (dev3000 MCP) を追加
+# 10. AI統合 (dev3000 MCP) を追加
 echo ""
 echo "📦 dev3000 MCP を追加しています..."
 claude mcp add --transport http --scope user dev3000 http://localhost:3684/api/mcp/mcp
@@ -172,13 +226,34 @@ else
     echo "   ローカルサーバーが起動していることを確認してください"
 fi
 
-# 10. 完了メッセージ
+# 11. .gitignoreにMinIOデータディレクトリを追加
+echo ""
+echo "🔧 .gitignoreにMinIOデータディレクトリを追加しています..."
+
+# .gitignoreファイルが存在するか確認
+if [ -f ".gitignore" ]; then
+    # dev-minio-*パターンが既に存在するか確認
+    if grep -q "^dev-minio-\*" .gitignore || grep -q "^/dev-minio-\*" .gitignore; then
+        echo "⏭️  dev-minio-* は既に.gitignoreに含まれています"
+    else
+        # MinIOデータディレクトリのパターンを追加
+        echo "" >> .gitignore
+        echo "# MinIO local development storage" >> .gitignore
+        echo "dev-minio-*/" >> .gitignore
+        echo ".minio.pid" >> .gitignore
+        echo "✅ dev-minio-*/ と .minio.pid を.gitignoreに追加しました"
+    fi
+else
+    echo "⚠️  .gitignoreファイルが見つかりません"
+fi
+
+# 12. 完了メッセージ
 echo ""
 echo "🎉 セットアップが完了しました！"
 echo ""
 echo "📋 生成された設定:"
 echo "   🆔 プロジェクト識別子: $IDENTIFIER"
-echo "   📁 PGLite DB: $PGLITE_DB_PATH"
+echo "   🐘 PostgreSQL DB: $DB_NAME"
 echo "   🗄️  MinIO API: http://localhost:$MINIO_PORT"
 echo "   🌐 MinIO Console: http://localhost:$MINIO_CONSOLE_PORT"
 echo ""

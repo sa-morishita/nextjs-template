@@ -78,7 +78,15 @@
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_network_requests",
-      "Bash(pnpm check:all:*)"
+      "Bash(pnpm check:all:*)",
+      "Bash(source:*)",
+      "Bash(mc alias set:*)",
+      "Bash(npx which:*)",
+      "Bash(sudo lsof:*)",
+      "Bash(brew services:*)",
+      "mcp__playwright__browser_install",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_click"
     ],
     "deny": []
   },

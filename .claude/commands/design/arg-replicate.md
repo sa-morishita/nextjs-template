@@ -156,6 +156,18 @@ src/app/design-sample/[sample-name]/
 3. **アクセス情報**: 生成されたページのローカルパス表示
 4. **次のステップ**: ブラウザでの確認方法を案内
 
+### 画像素材の処理
+
+**重要**: 画像は全て[Lorem Picsum](https://picsum.photos/)でプレースホルダー画像に置き換える
+
+```tsx
+// 基本: https://picsum.photos/width/height
+<Image src="https://picsum.photos/800/600" alt="placeholder" width={800} height={600} />
+
+// 同じ画像を使い回す場合はseedを指定
+<Image src="https://picsum.photos/seed/hero/1920/1080" alt="hero" width={1920} height={1080} />
+```
+
 ### Step 7: コード品質検証
 
 生成されたコードの品質を確認するため、以下のコマンドを実行：

@@ -210,7 +210,73 @@ setup_worktree() {
         echo -e "${GREEN}✅ ${ENV_FILES_COPIED}個の環境ファイルをコピーしました${NC}"
     fi
 
-    # 2. 依存関係のインストール
+    # 2. プロジェクト名を取得
+    PROJECT_NAME=$(basename "$PROJECT_ROOT")
+    
+    # 3. ワークツリー専用のデータベースを作成
+    echo -e "${YELLOW}ワークツリー専用のPostgreSQLデータベースを作成しています...${NC}"
+    
+    # データベース名を生成（ハイフンをアンダースコアに変換）
+    DB_NAME="${PROJECT_NAME//-/_}_${WORKTREE_NAME//-/_}_dev"
+    
+    # PostgreSQLが起動しているか確認
+    if command -v psql &> /dev/null; then
+        # データベースが既に存在するか確認
+        if psql -U $USER -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+            echo -e "${YELLOW}データベース '$DB_NAME' は既に存在します${NC}"
+        else
+            # データベースを作成
+            if createdb "$DB_NAME"; then
+                echo -e "${GREEN}✅ データベース '$DB_NAME' を作成しました${NC}"
+            else
+                echo -e "${RED}❌ データベースの作成に失敗しました${NC}"
+                echo "   PostgreSQLが起動していることを確認してください:"
+                echo "   brew services start postgresql@17"
+            fi
+        fi
+    else
+        echo -e "${RED}⚠️  PostgreSQLがインストールされていません${NC}"
+        echo "   以下のコマンドでインストールしてください:"
+        echo "   brew install postgresql@17"
+        echo "   brew services start postgresql@17"
+    fi
+
+    # 4. ワークツリー専用のMinIOデータディレクトリを作成
+    echo -e "${YELLOW}ワークツリー専用のMinIOストレージを準備しています...${NC}"
+    
+    # ワークツリー名からハッシュ生成（8文字）
+    HASH=$(echo -n "$WORKTREE_NAME" | shasum -a 256 | cut -c1-8)
+    MINIO_DATA_DIR="../../dev-minio-worktree-${HASH}"
+    
+    # MinIOデータディレクトリを作成
+    if [ ! -d "$MINIO_DATA_DIR" ]; then
+        mkdir -p "$MINIO_DATA_DIR"
+        echo -e "${GREEN}✅ MinIOデータディレクトリ '$MINIO_DATA_DIR' を作成しました${NC}"
+    else
+        echo -e "${YELLOW}MinIOデータディレクトリ '$MINIO_DATA_DIR' は既に存在します${NC}"
+    fi
+
+    # 5. .env.localの環境変数を更新
+    if [ -f ".env.local" ]; then
+        echo -e "${YELLOW}.env.localの環境変数を更新しています...${NC}"
+        
+        # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" .env.local
+            sed -i '' "s|^DEV_MINIO_DATA_DIR=.*|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.local
+        else
+            # Linux
+            sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" .env.local
+            sed -i "s|^DEV_MINIO_DATA_DIR=.*|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.local
+        fi
+        
+        echo -e "${GREEN}✅ .env.localの環境変数を更新しました${NC}"
+        echo -e "${BLUE}  DATABASE_URL: postgresql://localhost:5432/$DB_NAME${NC}"
+        echo -e "${BLUE}  DEV_MINIO_DATA_DIR: $MINIO_DATA_DIR${NC}"
+    fi
+
+    # 6. 依存関係のインストール
     echo -e "${YELLOW}依存関係をインストールしています...${NC}"
     if command -v pnpm >/dev/null 2>&1; then
         pnpm install
@@ -220,220 +286,21 @@ setup_worktree() {
         exit 1
     fi
 
-    # Supabaseがインストールされているか確認
-    if ! command -v supabase >/dev/null 2>&1; then
-        echo -e "${YELLOW}Supabase CLIがインストールされていません。インストールしてください${NC}"
-        echo "  brew install supabase/tap/supabase"
-    fi
-
-    # 3. Drizzleスキーマのプッシュ
-    echo -e "${YELLOW}Drizzleスキーマをプッシュしています...${NC}"
-    if pnpm db:push; then
-        echo -e "${GREEN}✅ Drizzleスキーマのプッシュが完了しました${NC}"
+    # 7. データベースマイグレーションの実行
+    echo -e "${YELLOW}データベースマイグレーションを実行しています...${NC}"
+    if pnpm db:migrate:dev; then
+        echo -e "${GREEN}✅ データベースマイグレーションが完了しました${NC}"
     else
-        echo -e "${RED}⚠️  Drizzleスキーマのプッシュに失敗しました${NC}"
+        echo -e "${RED}⚠️  データベースマイグレーションに失敗しました${NC}"
+        echo "   手動で実行してください: pnpm db:migrate:dev"
     fi
 
-    # 4. Git hooksのセットアップ
+    # 8. Git hooksのセットアップ
     echo -e "${YELLOW}Git hooksをセットアップしています...${NC}"
     if pnpm run prepare; then
         echo -e "${GREEN}✅ Git hooks（Lefthook）のセットアップが完了しました${NC}"
     else
         echo -e "${RED}⚠️  Git hooksのセットアップに失敗しました${NC}"
-    fi
-
-    # .gitignoreにsupabase/config.tomlを追加（まだ存在しない場合）
-    if ! grep -q "^supabase/config\.toml$" .gitignore 2>/dev/null; then
-        echo -e "${YELLOW}.gitignoreにsupabase/config.tomlを追加しています...${NC}"
-        echo "" >> .gitignore
-        echo "# Worktree specific Supabase config" >> .gitignore
-        echo "supabase/config.toml" >> .gitignore
-        echo -e "${GREEN}✅ .gitignoreにsupabase/config.tomlを追加しました${NC}"
-    else
-        echo -e "${BLUE}📝 supabase/config.tomlは既に.gitignoreに存在します${NC}"
-    fi
-
-
-    # 5. Supabase Localのセットアップ
-    if command -v supabase >/dev/null 2>&1; then
-        echo -e "${YELLOW}Supabase Localのセットアップを確認しています...${NC}"
-
-        # Supabaseが初期化されているか確認
-        if [ ! -f "supabase/config.toml" ]; then
-            echo -e "${YELLOW}Supabaseを初期化しています...${NC}"
-            if supabase init; then
-                echo -e "${GREEN}✅ Supabaseの初期化が完了しました${NC}"
-            else
-                echo -e "${RED}⚠️  Supabaseの初期化に失敗しました${NC}"
-            fi
-        fi
-
-        # worktree用のポート設定を生成
-        WORKTREE_PORT_OFFSET=$(echo "$WORKTREE_NAME" | cksum | cut -d' ' -f1)
-        WORKTREE_PORT_OFFSET=$((WORKTREE_PORT_OFFSET % 1000))
-
-        API_PORT=$((54321 + WORKTREE_PORT_OFFSET))
-        DB_PORT=$((54322 + WORKTREE_PORT_OFFSET))
-        STUDIO_PORT=$((54323 + WORKTREE_PORT_OFFSET))
-        INBUCKET_PORT=$((54324 + WORKTREE_PORT_OFFSET))
-        ANALYTICS_PORT=$((54327 + WORKTREE_PORT_OFFSET))
-
-        # worktree専用のSupabase設定を作成
-        if [ -f "supabase/config.toml" ]; then
-            echo -e "${YELLOW}worktree専用のSupabase設定を作成しています...${NC}"
-
-            # config.toml.exampleからconfig.tomlを作成
-            if [ -f "../../supabase/config.toml.example" ]; then
-                cp "../../supabase/config.toml.example" "supabase/config.toml"
-            else
-                # フォールバック: メインのconfig.tomlからコピー
-                cp "../../supabase/config.toml" "supabase/config.toml"
-            fi
-
-            # project_idを変更
-            sed -i.bak "s/project_id = \".*\"/project_id = \"${WORKTREE_NAME}\"/" supabase/config.toml
-
-            # ポート番号を変更
-            sed -i.bak "s/port = 54321/port = ${API_PORT}/" supabase/config.toml
-            sed -i.bak "s/port = 54322/port = ${DB_PORT}/" supabase/config.toml
-            sed -i.bak "s/port = 54323/port = ${STUDIO_PORT}/" supabase/config.toml
-            sed -i.bak "s/port = 54324/port = ${INBUCKET_PORT}/" supabase/config.toml
-            sed -i.bak "s/port = 54327/port = ${ANALYTICS_PORT}/" supabase/config.toml
-
-            # バックアップファイルを削除
-            rm -f supabase/config.toml.bak
-
-            echo -e "${GREEN}✅ worktree専用のSupabase設定が完了しました${NC}"
-            echo -e "${BLUE}  API URL: http://localhost:${API_PORT}${NC}"
-            echo -e "${BLUE}  DB URL: postgresql://postgres:postgres@localhost:${DB_PORT}/postgres${NC}"
-            echo -e "${BLUE}  Studio URL: http://localhost:${STUDIO_PORT}${NC}"
-            echo -e "${BLUE}  Inbucket URL: http://localhost:${INBUCKET_PORT}${NC}"
-            echo -e "${BLUE}  Analytics URL: http://localhost:${ANALYTICS_PORT}${NC}"
-
-            # .env.localのDB URLを更新
-            if [ -f ".env.local" ]; then
-                sed -i.bak "s|DATABASE_URL=.*|DATABASE_URL=\"postgresql://postgres:postgres@localhost:${DB_PORT}/postgres\"|" .env.local
-                sed -i.bak "s|NEXT_PUBLIC_SUPABASE_URL=.*|NEXT_PUBLIC_SUPABASE_URL=\"http://localhost:${API_PORT}\"|" .env.local
-                rm -f .env.local.bak
-                echo -e "${GREEN}✅ .env.localのDB設定を更新しました${NC}"
-            fi
-
-            # .env.test.localの更新
-            if [ -f "../../.env.test.local" ]; then
-                cp "../../.env.test.local" ".env.test.local"
-                sed -i.bak "s|NEXT_PUBLIC_SUPABASE_URL=.*|NEXT_PUBLIC_SUPABASE_URL=\"http://localhost:${API_PORT}\"|" .env.test.local
-                rm -f .env.test.local.bak
-                echo -e "${GREEN}✅ .env.test.localをコピーして設定を更新しました${NC}"
-            fi
-
-            # next.config.tsにworktree用のSupabase StorageのremotePatternを追加
-            echo -e "${YELLOW}next.config.tsにSupabase StorageのremotePatternを追加しています...${NC}"
-            
-            # TypeScriptファイルを更新するためのNode.jsスクリプトを実行
-            cat > update-next-config.js << 'NODEJS_SCRIPT'
-const fs = require('fs');
-const path = require('path');
-
-const configPath = path.join(process.cwd(), 'next.config.ts');
-const apiPort = process.argv[2];
-
-if (!apiPort) {
-    console.error('API port is required');
-    process.exit(1);
-}
-
-// next.config.tsの内容を読み取る
-let content = fs.readFileSync(configPath, 'utf8');
-
-// 新しいremotePatternエントリを作成
-const newPattern = `      // Supabase Storage (worktree: ${process.env.USER || 'unknown'}/${path.basename(path.dirname(process.cwd()))})
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '${apiPort}',
-        pathname: '/storage/v1/object/public/**',
-      },`;
-
-// remotePatterns配列の終了位置を見つける
-const remotePatternsStart = content.indexOf('remotePatterns: [');
-if (remotePatternsStart === -1) {
-    console.error('remotePatterns not found in next.config.ts');
-    process.exit(1);
-}
-
-// 最初の閉じ括弧の位置を見つける（remotePatterns配列の終了）
-let bracketCount = 0;
-let inRemotePatterns = false;
-let insertPosition = -1;
-
-for (let i = remotePatternsStart; i < content.length; i++) {
-    if (content[i] === '[') {
-        if (!inRemotePatterns) {
-            inRemotePatterns = true;
-        }
-        bracketCount++;
-    } else if (content[i] === ']' && inRemotePatterns) {
-        bracketCount--;
-        if (bracketCount === 0) {
-            insertPosition = i;
-            break;
-        }
-    }
-}
-
-if (insertPosition === -1) {
-    console.error('Could not find the end of remotePatterns array');
-    process.exit(1);
-}
-
-// 既に同じポートのエントリが存在するかチェック
-if (content.includes(`port: '${apiPort}'`)) {
-    console.log(`RemotePattern for port ${apiPort} already exists`);
-    process.exit(0);
-}
-
-// 新しいパターンを挿入
-content = content.slice(0, insertPosition) + '\n' + newPattern + '\n    ' + content.slice(insertPosition);
-
-// ファイルに書き戻す
-fs.writeFileSync(configPath, content, 'utf8');
-console.log(`Added remotePattern for Supabase Storage on port ${apiPort}`);
-NODEJS_SCRIPT
-
-            if node update-next-config.js "${API_PORT}"; then
-                echo -e "${GREEN}✅ next.config.tsへのremotePattern追加が完了しました${NC}"
-                echo -e "${BLUE}  Storage URL: http://localhost:${API_PORT}/storage/v1/object/public/**${NC}"
-            else
-                echo -e "${RED}⚠️  next.config.tsの更新に失敗しました${NC}"
-            fi
-            
-            # 一時ファイルを削除
-            rm -f update-next-config.js
-        fi
-
-        # Supabase Localを起動
-        echo -e "${YELLOW}Supabase Localを起動しています...${NC}"
-        if supabase start; then
-            echo -e "${GREEN}✅ Supabase Localが起動しました${NC}"
-            
-            # データベースマイグレーションを実行
-            echo -e "${YELLOW}データベースマイグレーションを実行しています...${NC}"
-            if pnpm db:migrate:dev; then
-                echo -e "${GREEN}✅ データベースマイグレーションが完了しました${NC}"
-            else
-                echo -e "${RED}⚠️  データベースマイグレーションに失敗しました${NC}"
-                echo -e "${YELLOW}   手動で実行してください: pnpm db:migrate:dev${NC}"
-            fi
-        else
-            echo -e "${RED}⚠️  Supabase Localの起動に失敗しました${NC}"
-            echo -e "${BLUE}📝 手動でSupabase Localを開始するには:${NC}"
-            echo -e "${YELLOW}   cd $WORKTREE_PATH && supabase start${NC}"
-            echo -e "${YELLOW}   その後: pnpm db:migrate:dev${NC}"
-        fi
-        
-        echo -e "${BLUE}📝 このworktreeはメインのSupabaseとは独立して動作します${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Supabase CLIがインストールされていません${NC}"
     fi
 
     # プロジェクトルートに戻る
@@ -455,8 +322,14 @@ echo -e "${GREEN}パス: $WORKTREE_PATH${NC}"
 echo -e "${GREEN}ブランチ: $BRANCH_NAME${NC}"
 echo -e "${GREEN}worktree名: $WORKTREE_NAME${NC}"
 echo ""
-echo -e "${BLUE}作成されたワークツリーのパス:${NC}"
-echo "$WORKTREE_PATH"
+echo -e "${BLUE}環境設定:${NC}"
+echo -e "${BLUE}  データベース: $DB_NAME${NC}"
+echo -e "${BLUE}  MinIOデータ: $MINIO_DATA_DIR${NC}"
+echo ""
+echo -e "${YELLOW}MinIOを起動する場合:${NC}"
+echo -e "${YELLOW}  cd $WORKTREE_PATH${NC}"
+echo -e "${YELLOW}  source .env.local${NC}"
+echo -e "${YELLOW}  minio server \"\$DEV_MINIO_DATA_DIR\" --address \":\$DEV_MINIO_PORT\" --console-address \":\$DEV_MINIO_CONSOLE_PORT\"${NC}"
 echo ""
 echo -e "${BLUE}現在のworktree一覧:${NC}"
 git worktree list

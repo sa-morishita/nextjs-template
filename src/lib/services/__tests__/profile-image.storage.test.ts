@@ -4,7 +4,8 @@ import {
   deleteOldProfileImages,
   uploadProfileImageFromUrl,
 } from '@/lib/services/profile-image.service';
-import { testSupabaseClient } from '@/test/storage-setup';
+import { storage } from '@/lib/storage/client';
+import '@/test/storage-setup'; // パッチを適用
 
 /**
  * Profile Image Service Storage結合テスト
@@ -37,9 +38,7 @@ describe('Profile Image Service Storage結合テスト', () => {
     // テストでアップロードしたファイルをクリーンアップ
     if (uploadedFiles.length > 0) {
       try {
-        const { error } = await testSupabaseClient.storage
-          .from('avatars')
-          .remove(uploadedFiles);
+        const { error } = await storage.avatars.remove(uploadedFiles);
 
         if (error) {
           console.warn('Cleanup error:', error);
@@ -52,7 +51,7 @@ describe('Profile Image Service Storage結合テスト', () => {
 
   describe('uploadProfileImageFromUrl() - プロフィール画像アップロード', () => {
     describe('正常系', () => {
-      it('LINEプロフィール画像URLからSupabase Storageにアップロードできること', async () => {
+      it('LINEプロフィール画像URLからStorageにアップロードできること', async () => {
         // When: 画像URLからアップロード
         const result = await uploadProfileImageFromUrl(
           TEST_IMAGE_URL,
@@ -67,12 +66,22 @@ describe('Profile Image Service Storage結合テスト', () => {
 
         // クリーンアップ用にファイルパスを記録
         if (result.url) {
+          // MinIO/Supabase両対応のURL解析
           const urlParts = new URL(result.url);
-          const pathMatch = urlParts.pathname.match(
-            /\/storage\/v1\/object\/public\/(.*)/,
+          let filePath: string | undefined;
+
+          // Supabase URL pattern: /storage/v1/object/public/avatars/...
+          const supabaseMatch = urlParts.pathname.match(
+            /\/storage\/v1\/object\/public\/avatars\/(.*)/,
           );
-          if (pathMatch?.[1]) {
-            uploadedFiles.push(pathMatch[1]);
+
+          // MinIO URL pattern: /avatars/...
+          const minioMatch = urlParts.pathname.match(/\/avatars\/(.*)/);
+
+          filePath = supabaseMatch?.[1] || minioMatch?.[1];
+
+          if (filePath) {
+            uploadedFiles.push(filePath);
           }
         }
       });
@@ -105,12 +114,10 @@ describe('Profile Image Service Storage結合テスト', () => {
           const timestamp = Date.now() + i;
           const fileName = `${testUserId}/profile-${timestamp}.jpg`;
 
-          const { data, error } = await testSupabaseClient.storage
-            .from('avatars')
-            .upload(fileName, blob, {
-              contentType: 'image/jpeg',
-              upsert: true,
-            });
+          const { data, error } = await storage.avatars.upload(fileName, blob, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
 
           expect(error).toBeNull();
           if (data) {
@@ -124,9 +131,7 @@ describe('Profile Image Service Storage結合テスト', () => {
         await deleteOldProfileImages(testUserId);
 
         // Then: 最新の1つだけが残る
-        const { data: filesAfter } = await testSupabaseClient.storage
-          .from('avatars')
-          .list(testUserId);
+        const { data: filesAfter } = await storage.avatars.list(testUserId);
 
         expect(filesAfter?.length).toBe(1);
       });

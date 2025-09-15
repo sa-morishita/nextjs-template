@@ -33,9 +33,10 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
    - worktreeとブランチの作成
    - 依存関係のインストール（pnpm install）
    - 環境設定ファイル（.env.local）のコピー
-   - Drizzleスキーマのプッシュ
+   - ワークツリー専用PostgreSQLデータベースの作成
+   - ワークツリー専用MinIOストレージディレクトリの作成
+   - データベースマイグレーションの実行
    - Git hooksのセットアップ
-   - Supabase Localの設定（worktree専用ポート）
    - VSCode workspaceファイルの更新
 
    !bash .document/scripts/create-worktree.sh [ワークツリー名] [ブランチ名]
@@ -43,13 +44,14 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
 6. 作成されたワークツリーに移動
    !cd work/[ワークツリー名]
 
-7. Supabase Localを起動
-   !supabase start
-
-8. 開発準備完了の確認
+7. 開発準備完了の確認
    !echo "✅ ワークツリーの作成と開発環境のセットアップが完了しました"
    !echo "📁 作業ディレクトリ: $(pwd)"
    !echo "🌿 現在のブランチ: $(git branch --show-current)"
+   !echo ""
+   !echo "💡 MinIOストレージが必要な場合は以下のコマンドで起動してください:"
+   !echo "source .env.local"
+   !echo 'minio server "$DEV_MINIO_DATA_DIR" --address ":$DEV_MINIO_PORT" --console-address ":$DEV_MINIO_CONSOLE_PORT"'
 
 ## 使用例
 
@@ -63,11 +65,11 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
 2. 適切な名前（例: issue-123-user-auth）でワークツリーを作成
 3. feature/123-user-authブランチを作成
 4. 開発環境を自動セットアップ
-5. Supabase Localを起動
 
 ## 注意事項
 
 - main/master/developブランチから実行する必要があります
-- 各ワークツリーは独立したSupabase Local環境を持ちます
-- ポート番号は自動的に割り当てられます
-- .env.localは自動的にコピーされます
+- 各ワークツリーは独立したPostgreSQLデータベースを持ちます
+- 各ワークツリーは独立したMinIOストレージディレクトリを持ちます
+- .env.localは自動的にコピーされ、ワークツリー用に設定が更新されます
+- MinIOは必要に応じて手動で起動します（メインと同じポートを使用）

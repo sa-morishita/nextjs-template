@@ -56,3 +56,8 @@ work/
 
 # MCP
 .mcp.json
+
+# MinIO local development storage
+dev-minio-*/
+dev-minio-worktree-*/
+.minio.pid

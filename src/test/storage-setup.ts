@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
 import { vi } from 'vitest';
+import { storage, type UnifiedStorage } from '@/lib/storage/client';
 
 /**
  * Storage結合テスト用のセットアップ
- * ローカルSupabaseインスタンスとの接続を設定
+ * MinIO/Supabase Storage との接続を設定
  */
 
 // グローバルfetchのタイムアウト設定
@@ -12,18 +12,26 @@ if (!global.fetch) {
   console.info('Native fetch is available');
 }
 
-// Service Role Keyを使用したテスト用クライアントをエクスポート
-// 環境変数は storage-setup-env.ts で読み込まれている
-export const testSupabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:55077',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
+// Node.js環境でのBlob処理をパッチ
+// AWS SDK v3はNode.js環境でBlobをサポートしていないため、Bufferに変換する
+const patchStorageForNodeJs = (storageInstance: UnifiedStorage) => {
+  const originalUpload = storageInstance.upload.bind(storageInstance);
+  storageInstance.upload = async (path, file, options) => {
+    if (
+      typeof window === 'undefined' &&
+      file instanceof Blob &&
+      !(file instanceof Buffer)
+    ) {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return originalUpload(path, buffer, options);
+    }
+    return originalUpload(path, file, options);
+  };
+};
+
+// すべてのStorageインスタンスにパッチを適用
+Object.values(storage).forEach(patchStorageForNodeJs);
 
 // コンソール出力のモック（必要に応じて）
 vi.spyOn(console, 'log').mockImplementation(() => {});
