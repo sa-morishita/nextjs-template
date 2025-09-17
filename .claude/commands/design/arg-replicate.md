@@ -3,8 +3,8 @@ Playwright MCPで参考サイトのデザインを再現
 ---
 
 allowed-tools: ["mcp__playwright__browser_navigate", "mcp__playwright__browser_take_screenshot", "mcp__playwright__browser_snapshot", "mcp__playwright__browser_evaluate", "mcp__playwright__browser_click", "mcp__playwright__browser_hover", "mcp__playwright__browser_resize", "mcp__playwright__browser_network_requests", "mcp__playwright__browser_wait_for", "Write", "Edit", "Read", "LS", "Bash"]
+
 description: "Playwright MCPでDOM/CSS抽出し、Next.jsコンポーネントとして高精度デザイン再現を実行"
-model: "claude-3-opus-20240229"
 
 ---
 
@@ -90,13 +90,14 @@ model: "claude-3-opus-20240229"
 抽出データから以下を分析：
 
 1. **レイアウト構造**: Grid/Flexboxの使用パターン → Tailwind gridとflexクラスに変換
-2. **カラーパレット**: 使用色の抽出 → Tailwind color-*クラスまたはカスタムカラー定義
-3. **タイポグラフィ**: フォントサイズ、行間、フォントファミリー → text-*, leading-*, font-*クラス
-4. **間隔設計**: margin、paddingの一貫性 → m-*, p-*, space-*クラス
+2. **カラーパレット**: 使用色の抽出 → Tailwind color-\*クラスまたはカスタムカラー定義
+3. **タイポグラフィ**: フォントサイズ、行間、フォントファミリー → text-_, leading-_, font-\*クラス
+4. **間隔設計**: margin、paddingの一貫性 → m-_, p-_, space-\*クラス
 5. **レスポンシブ**: ブレークポイントとメディアクエリ → sm:, md:, lg:, xl: prefixで実装
 6. **コンポーネント分割**: 再利用可能な部品の特定
 
 **CSS → Tailwind 変換ルール:**
+
 - `display: flex` → `flex`
 - `justify-content: center` → `justify-center`
 - `margin: 16px` → `m-4`
@@ -124,7 +125,8 @@ src/app/design-sample/[sample-name]/
 ```
 
 **重要: CSSスタイリングの方針**
-- **最優先**: Tailwind CSSクラスでの実装（color-*, spacing-*, typography-*, layout-*など）
+
+- **最優先**: Tailwind CSSクラスでの実装（color-_, spacing-_, typography-*, layout-*など）
 - **Tailwind変換**: 抽出したCSS値をTailwindユーティリティクラスに可能な限り変換
 - **カスタムCSS最小化**: `styles/globals.css`は以下の場合のみ使用
   - 複雑なアニメーション（keyframes）
@@ -173,11 +175,13 @@ src/app/design-sample/[sample-name]/
 生成されたコードの品質を確認するため、以下のコマンドを実行：
 
 1. **Biome検証**: コードフォーマットとリント確認
+
    ```
    pnpm biome check --write .
    ```
 
 2. **TypeScript検証**: 型チェック実行
+
    ```
    pnpm typecheck
    ```
@@ -240,5 +244,3 @@ src/app/design-sample/[sample-name]/
 - 必要最小限のCSS生成
 - 重複コンポーネントの統合提案
 - バンドルサイズ最適化の提案
-
-このコマンドにより、デザイン参考サイトから高精度なNext.jsコンポーネントを効率的に生成し、開発時間を大幅に短縮できます。
