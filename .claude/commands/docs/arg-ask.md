@@ -38,3 +38,11 @@ allowed-tools: ["Read", "Grep", "mcp__serena__read_memory", "mcp__serena__search
 6. 仕様書の更新が必要な場合は提案
    - 質問から仕様書の不足や古い情報が判明した場合
    - /docs:sync の実行を推奨
+
+## 使用例
+
+```
+/docs:arg-ask ログイン機能の仕様を教えて
+/docs:arg-ask ストレージの制限について
+/docs:arg-ask TODOリストのデータ構造
+```

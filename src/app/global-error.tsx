@@ -117,7 +117,17 @@ export default function GlobalError({
             {/* サポート情報 */}
             <div className="space-y-1 text-gray-500 text-xs">
               <p>このエラーは自動で記録されています</p>
-              <p className="font-mono">{new Date().toISOString()}</p>
+              <p className="font-mono">
+                {new Intl.DateTimeFormat('ja-JP', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZone: 'Asia/Tokyo',
+                }).format(new Date())}
+              </p>
             </div>
           </div>
         </div>

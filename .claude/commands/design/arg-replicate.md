@@ -24,7 +24,7 @@ description: "Playwright MCPでDOM/CSS抽出し、Next.jsコンポーネント�
 ## 使用方法
 
 ```
-/replicate https://example.com/design-page
+/design:arg-replicate https://example.com/design-page
 ```
 
 ## Instructions
@@ -107,7 +107,7 @@ description: "Playwright MCPでDOM/CSS抽出し、Next.jsコンポーネント�
 
 ### Step 4: Next.js コンポーネント生成
 
-以下のファイル構造で生成：
+以下を参考にファイル・フォルダ構造を生成：
 
 ```
 src/app/design-sample/[sample-name]/

@@ -11,7 +11,7 @@
     "format": "biome format --write",
     "check": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "check:all": "pnpm run check && pnpm run typecheck",
+    "check:all": "pnpm check && pnpm typecheck",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.mts --reporter=verbose",

@@ -20,6 +20,14 @@ description: "MinIOとSupabase両方に新しいパブリックバケットを�
 - `avatars` → avatars バケット作成
 - `documents` → documents バケット作成
 
+## 使用例
+
+```
+/dev:arg-create-storage-bucket avatars
+/dev:arg-create-storage-bucket documents
+/dev:arg-create-storage-bucket user-uploads
+```
+
 1. bucket-config.tsに設定を追加（先に手動で追加が必要）
 
 2. supabase/config.tomlに最小限の設定を追加

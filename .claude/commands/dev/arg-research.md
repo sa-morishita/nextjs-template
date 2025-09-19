@@ -79,12 +79,12 @@ description: "公式ドキュメントを優先して技術情報を検索"
 ## 使用例
 
 ```
-/dev:research Next.js 15 App Router の使い方
-/dev:research React Server Components のベストプラクティス
-/dev:research Supabase と Next.js の統合方法
-/dev:research TypeScript error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'
-/dev:research Vitest でReact Hookのテスト方法
-/dev:research Tailwind CSS v4 の新機能
+/dev:arg-research Next.js 15 App Router の使い方
+/dev:arg-research React Server Components のベストプラクティス
+/dev:arg-research Supabase と Next.js の統合方法
+/dev:arg-research TypeScript error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'
+/dev:arg-research Vitest でReact Hookのテスト方法
+/dev:arg-research Tailwind CSS v4 の新機能
 ```
 
 ## 効果的な使い方

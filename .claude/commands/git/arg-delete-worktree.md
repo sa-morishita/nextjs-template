@@ -55,7 +55,7 @@ issue番号に紐づいたワークツリーとブランチを安全に削除し
 ## 使用例
 
 ```
-/git:delete-worktree 123
+/git:arg-delete-worktree 123
 ```
 
 これにより、issue番号123に関連するワークツリー（例: work/issue-123-login、work/123-login など）とブランチ（例: feature/123-login）が削除されます。

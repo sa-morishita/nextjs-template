@@ -272,6 +272,14 @@ touch ".document/todo/$(date '+%Y_%m_%d_%H_%M')_[機能の簡潔な説明].md"
 - 既存の実装と矛盾する要求がある
 - セキュリティや性能に関わる重要な決定
 
+## 使用例
+
+```
+/dev:arg-implement-feature ユーザープロフィール編集機能を追加
+/dev:arg-implement-feature ダッシュボードにグラフ表示機能を実装
+/dev:arg-implement-feature ファイルアップロード機能をストレージサービスで実装
+```
+
 ## このコマンドの目的
 
 1. **品質向上**：実装前に十分な検討を行い、手戻りを減らす

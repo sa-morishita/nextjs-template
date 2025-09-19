@@ -48,12 +48,11 @@ export async function generateUploadUrl(
     throw new Error(validation.error);
   }
 
-  // ファイルパス生成（ユーザーフォルダ + 日付構造）
-  const date = new Date();
-  const folderName = `${input.userId}/${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+  // ファイルパス生成（ユーザーフォルダ構造）
+  const timestamp = Date.now();
+  const folderName = `${input.userId}`;
 
   // ユニークファイル名生成（タイムスタンプ + ランダム）
-  const timestamp = Date.now();
   const fileExtension = input.fileName.split('.').pop() || 'jpg';
   const uniqueFileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
   const filePath = `${folderName}/${uniqueFileName}`;

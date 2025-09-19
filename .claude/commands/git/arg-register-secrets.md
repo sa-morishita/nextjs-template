@@ -20,7 +20,7 @@ description: "GitHub Actions環境（preview/production）にシークレット�
 
 2. 環境名が指定されていない場合のエラー処理
    !echo "エラー: 環境名を指定してください (preview または production)"
-   !echo "使用方法: /git:register-secrets preview"
+   !echo "使用方法: /git:arg-register-secrets preview"
    !exit 1
 
 3. 対応するenvファイルの存在確認
@@ -69,10 +69,10 @@ description: "GitHub Actions環境（preview/production）にシークレット�
 
 ```bash
 # Preview環境にシークレットを登録
-/git:register-secrets preview
+/git:arg-register-secrets preview
 
 # Production環境にシークレットを登録
-/git:register-secrets production
+/git:arg-register-secrets production
 ```
 
 ## 前提条件

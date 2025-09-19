@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import type { Diary } from '@/db/schema';
-import { formatDate, formatDateTimeSlash } from '@/lib/utils/date';
+import { formatDate, formatDateTime } from '@/lib/utils/date';
 
 interface DiaryItemProps {
   diary: Diary;
@@ -29,7 +29,7 @@ export function DiaryItem({ diary, onClick }: DiaryItemProps) {
           </p>
           {diary.createdAt && (
             <p className="text-muted-foreground text-xs">
-              {formatDateTimeSlash(diary.createdAt)}
+              {formatDateTime(diary.createdAt)}
             </p>
           )}
         </div>

@@ -5,6 +5,7 @@ import { AlertCircleIcon, HomeIcon, RefreshCwIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/utils/date';
 
 export default function ErrorPage({
   error,
@@ -84,7 +85,7 @@ export default function ErrorPage({
           <p>
             問題が続く場合は、下記の情報と共にサポートまでお問い合わせください
           </p>
-          <p className="font-mono">{new Date().toISOString()}</p>
+          <p className="font-mono">{formatDateTime(new Date())}</p>
         </div>
       </div>
     </div>

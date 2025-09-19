@@ -14,6 +14,7 @@ export function formatDate(date: Date | string | number): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: JAPAN_TIMEZONE,
   }).format(new Date(date));
 }
 
@@ -29,21 +30,8 @@ export function formatDateTime(date: Date | string | number): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZone: JAPAN_TIMEZONE,
   }).format(new Date(date));
-}
-
-/**
- * 日時をスラッシュ区切りでフォーマット（yyyy/MM/dd HH:mm形式）
- * @example formatDateTimeSlash(new Date()) // "2025/08/26 14:30"
- */
-export function formatDateTimeSlash(date: Date | string | number): string {
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}/${month}/${day} ${hours}:${minutes}`;
 }
 
 /**

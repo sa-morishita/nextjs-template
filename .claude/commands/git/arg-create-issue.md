@@ -84,9 +84,9 @@ gh issue create --title "[自動生成したタイトル]" --body "[生成した
 ## 使用例
 
 ```
-/git:create-issue ユーザー一覧に検索機能を追加したい
-/git:create-issue ログイン時にエラーが発生する
-/git:create-issue READMEを更新
+/git:arg-create-issue ユーザー一覧に検索機能を追加したい
+/git:arg-create-issue ログイン時にエラーが発生する
+/git:arg-create-issue READMEを更新
 ```
 
 ## ポイント

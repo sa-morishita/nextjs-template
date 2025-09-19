@@ -123,13 +123,13 @@ URLまたは自然言語のテストケースから、Page Object Model生成・
 
 ```bash
 # URL + テストケース
-/e2e:create "https://localhost:3000/login でログインしてダッシュボードに遷移"
+/test:arg-create-e2e "https://localhost:3000/login でログインしてダッシュボードに遷移"
 
 # 既存ページのテストケース
-/e2e:create "ユーザー設定でプロフィール名を変更できる"
+/test:arg-create-e2e "ユーザー設定でプロフィール名を変更できる"
 
 # 複雑なフロー
-/e2e:create "https://localhost:3000/register で新規登録→メール認証→初期設定完了"
+/test:arg-create-e2e "https://localhost:3000/register で新規登録→メール認証→初期設定完了"
 ```
 
 ### 完了時の報告
