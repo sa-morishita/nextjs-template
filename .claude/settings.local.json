@@ -90,7 +90,8 @@
       "Bash(claude mcp:*)",
       "Bash(mc mb:*)",
       "Bash(mc anonymous set:*)",
-      "Bash(mc ls:*)"
+      "Bash(mc ls:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   },

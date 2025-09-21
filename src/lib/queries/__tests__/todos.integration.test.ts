@@ -139,8 +139,10 @@ describe('TODO Queries 結合テスト', () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             token: 'session-token-123',
+            ipAddress: null,
+            userAgent: null,
           },
-        });
+        } as Awaited<ReturnType<typeof getSession>>);
 
         // 完了・未完了のTODOを作成
         await createTestTodo({
