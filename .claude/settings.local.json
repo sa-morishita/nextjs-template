@@ -91,7 +91,8 @@
       "Bash(mc mb:*)",
       "Bash(mc anonymous set:*)",
       "Bash(mc ls:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__serena__list_memories"
     ],
     "deny": []
   },

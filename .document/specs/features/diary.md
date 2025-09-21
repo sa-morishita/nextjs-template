@@ -25,12 +25,28 @@
 ### データフロー
 
 ```
-UI Component → Server Action → Usecase → Service
+UI Component → Server Action → Usecase → Service → Storage
 ```
 
+### レイヤー別責務
+
+- **Server Action** (`diary.ts`): 
+  - バリデーション
+  - エラーハンドリング
+  - キャッシュ無効化
+  
 - **Usecase**: 
-  - `createDiaryUsecase()`: 日記作成
-  - `generateDiaryImageUploadUrl()`: アップロードURL生成
+  - `createDiaryUsecase()`: 日記作成ビジネスロジック
+  - `generateDiaryImageUploadUrl()`: URL生成ロジック
+  
+- **Service** (`image-upload.service.ts`):
+  - 統一Storageクライアントの利用
+  - ファイル名生成
+  - URL生成処理
+  
+- **Storage** (`storage/client.ts`):
+  - MinIO/Supabase自動切り替え
+  - 統一API提供
 
 ## 画面構成
 
@@ -71,13 +87,15 @@ UI Component → Server Action → Usecase → Service
 
 ### バリデーション
 
-**ファイル**: `src/lib/schemas/upload.ts`
+**ファイル**: 
+- `src/lib/schemas/upload.ts`: 基本バリデーション
+- `src/lib/domain/storage/bucket-config.ts`: バケット別設定
 
-- `getSignedUploadUrlSchema`: アップロード要求検証
-  - ファイル名
-  - ファイルサイズ
-  - MIME型
-  - 拡張子制限
+**検証内容**:
+- `validateFile()`: 統一ファイル検証関数
+  - バケット設定に基づくMIME型チェック
+  - ファイルサイズ上限チェック
+  - エラーメッセージの日本語対応
 
 ## アーキテクチャパターン
 
@@ -131,9 +149,13 @@ _containers/diary-form/
 1. **認証必須**: `privateActionClient`使用
 2. **ユーザー分離**: `userId`による権限制御
 3. **ファイル制限**: 
-   - 許可されたMIME型のみ
-   - ファイルサイズ制限
-   - 安全なファイル名生成
+   - バケット設定による統一制限
+   - MIME型ホワイトリスト方式
+   - ファイルサイズ上限（5MB）
+   - UUID による安全なファイル名生成
+4. **環境別セキュリティ**:
+   - **開発**: MinIO の基本認証
+   - **本番**: Supabase RLS + Service Role Key
 
 ## テスト
 
@@ -145,10 +167,38 @@ _containers/diary-form/
 
 ## Storage構成
 
-**場所**: Supabase Storage
-- **バケット**: `diary-images` (推定)
-- **パス構造**: `{userId}/{diaryId}/{filename}`
-- **アクセス制御**: RLS (Row Level Security)
+### 統一Storageアーキテクチャ（2025-09-21更新）
+
+**実装ファイル**: 
+- `src/lib/storage/client.ts`: 統一Storageインターフェース
+- `src/lib/domain/storage/bucket-config.ts`: バケット設定管理
+
+**環境別実装**:
+- **開発/テスト環境**: MinIO (S3互換ストレージ)
+  - 自動起動設定済み
+  - ポート自動割り当て
+- **本番環境**: Supabase Storage
+  - RLS (Row Level Security) による権限制御
+
+### バケット設定
+
+**バケット名**: `diaries`
+- **パス構造**: `{userId}/{uniqueId}.{拡張子}`
+- **最大ファイルサイズ**: 5MB
+- **許可MIME型**: 
+  - image/jpeg
+  - image/jpg  
+  - image/png
+  - image/webp
+- **アクセス**: パブリック
+
+### ファイルアップロードフロー
+
+1. **プリサインドURL生成**: 
+   - MinIO: S3 署名付きURL
+   - Supabase: ネイティブ署名URL
+2. **クライアント直接アップロード**
+3. **メタデータ保存**: データベースに画像URLを記録
 
 ## Loading状態
 

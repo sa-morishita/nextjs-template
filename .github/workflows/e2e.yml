@@ -9,7 +9,7 @@ on:
 
 env:
   NODE_VERSION: "22.15.1"
-  PNPM_VERSION: "9"
+  PNPM_VERSION: "10"
 
 jobs:
   e2e-tests:

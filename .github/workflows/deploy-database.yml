@@ -6,6 +6,10 @@ on:
       - main
       - develop
 
+env:
+  NODE_VERSION: "22.15.1"
+  PNPM_VERSION: "10"
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -17,11 +21,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
       - name: Install dependencies

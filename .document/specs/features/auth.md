@@ -114,3 +114,39 @@ UI Component → Server Action → Service Layer → Better Auth
 - `next-safe-action`による自動エラーキャッチ
 - フラットバリデーションエラー処理
 - 日本語エラーメッセージ対応
+
+## プロフィール画像機能（2025-09-21更新）
+
+### 機能概要
+
+外部URL（Googleアカウントのプロフィール画像など）をダウンロードしてStorageに保存。
+
+### 実装ファイル
+
+**サービス**: `src/lib/services/profile-image.service.ts`
+
+**主要関数**:
+- `uploadProfileImageFromUrl()`: URLから画像を取得してアップロード
+- `deleteOldProfileImages()`: 古いプロフィール画像の自動削除
+
+### Storage設定
+
+**バケット**: `avatars`
+- **保存パス**: `{userId}/profile-{timestamp}.{ext}`
+- **最大サイズ**: 5MB
+- **許可MIME型**: image/jpeg, image/png, image/webp
+- **アクセス**: パブリック
+
+### 処理フロー
+
+1. 外部URLから画像をフェッチ
+2. Content-Typeとファイルサイズを検証
+3. 統一Storageクライアント経由でアップロード
+4. 公開URLを生成して返却
+5. 非同期で古い画像を削除
+
+### エラーハンドリング
+
+- Sentryによるエラートラッキング
+- コンテキスト情報付きの詳細ログ
+- 古い画像削除失敗時はエラーにしない
