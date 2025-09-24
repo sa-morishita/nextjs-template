@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useHookFormOptimisticAction } from '@next-safe-action/adapter-react-hook-form/hooks';
 import { Check, X } from 'lucide-react';
+import React from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ interface TaskItemProps {
   todos: Todo[];
 }
 
-export function TaskItem({ todo, todos }: TaskItemProps) {
+function TaskItemComponent({ todo, todos }: TaskItemProps) {
   // IDをバインドしたアクションを作成
   const boundToggleTodoAction = toggleTodoAction.bind(null, todo.id);
 
@@ -120,3 +121,17 @@ export function TaskItem({ todo, todos }: TaskItemProps) {
     </Card>
   );
 }
+
+// React.memoでラップしてエクスポート
+export const TaskItem = React.memo(
+  TaskItemComponent,
+  (prevProps, nextProps) => {
+    // todoの内容が変わらなければ再レンダリングをスキップ
+    return (
+      prevProps.todo.id === nextProps.todo.id &&
+      prevProps.todo.completed === nextProps.todo.completed &&
+      prevProps.todo.title === nextProps.todo.title &&
+      prevProps.todo.updatedAt === nextProps.todo.updatedAt
+    );
+  },
+);

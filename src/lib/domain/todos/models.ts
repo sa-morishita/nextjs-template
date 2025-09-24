@@ -22,10 +22,22 @@ export interface TodosSummary {
  * TODO配列から統計情報を計算する
  */
 export function calculateTodoStats(todos: Todo[]): TodoStats {
+  const stats = todos.reduce(
+    (acc, todo) => {
+      if (todo.completed) {
+        acc.completed++;
+      } else {
+        acc.incomplete++;
+      }
+      return acc;
+    },
+    { completed: 0, incomplete: 0 },
+  );
+
   return {
     total: todos.length,
-    completed: todos.filter((todo) => todo.completed).length,
-    incomplete: todos.filter((todo) => !todo.completed).length,
+    completed: stats.completed,
+    incomplete: stats.incomplete,
   };
 }
 

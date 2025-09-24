@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { Todo } from '@/db/schema';
 import { TaskItem } from '../../_components/task-item';
 
@@ -7,7 +8,9 @@ interface TaskListPresentationalProps {
   todos: Todo[];
 }
 
-export function TaskListPresentational({ todos }: TaskListPresentationalProps) {
+function TaskListPresentationalComponent({
+  todos,
+}: TaskListPresentationalProps) {
   if (todos.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
@@ -24,3 +27,8 @@ export function TaskListPresentational({ todos }: TaskListPresentationalProps) {
     </div>
   );
 }
+
+// React.memoでラップしてエクスポート
+export const TaskListPresentational = React.memo(
+  TaskListPresentationalComponent,
+);

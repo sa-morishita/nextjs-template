@@ -13,10 +13,6 @@ import {
  * Better Auth のメール認証機能で使用
  * 本番環境とテスト環境で適切に動作するよう設定
  */
-console.log(
-  '📧 Initializing Resend with API key:',
-  env.RESEND_API_KEY ? `${env.RESEND_API_KEY.slice(0, 10)}...` : 'NOT SET',
-);
 export const resend = new Resend(env.RESEND_API_KEY);
 
 /**
