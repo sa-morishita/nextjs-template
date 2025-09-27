@@ -4,6 +4,7 @@ import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -32,6 +33,9 @@ export function DiaryDetailDialog({
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{displayTitle}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {displayTitle}の日記詳細
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

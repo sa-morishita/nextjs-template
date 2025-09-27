@@ -15,15 +15,10 @@ if (!process.env.GITHUB_ACTIONS) {
   }
 }
 
-// 必須環境変数のチェック（ローカル環境のみ）
-if (!process.env.GITHUB_ACTIONS && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error(
-    'SUPABASE_SERVICE_ROLE_KEY is required for storage tests.\n' +
-      'Please create .env.test.local file with the following variables:\n' +
-      '- SUPABASE_SERVICE_ROLE_KEY\n' +
-      '- NEXT_PUBLIC_SUPABASE_ANON_KEY\n' +
-      '- NEXT_PUBLIC_SUPABASE_URL\n' +
-      'You can get these values by running: supabase status',
-  );
-  process.exit(1);
-}
+// ストレージテスト用のデフォルト値を補完
+process.env.MINIO_ENDPOINT ||= 'http://127.0.0.1:9000';
+process.env.MINIO_BUCKET ||= 'app';
+process.env.MINIO_ACCESS_KEY ||= 'minioadmin';
+process.env.MINIO_SECRET_KEY ||= 'minioadmin';
+process.env.MINIO_PUBLIC_BASE_URL ||= `${process.env.MINIO_ENDPOINT?.replace(/\/$/, '')}/app`;
+process.env.USE_R2 ||= 'false';

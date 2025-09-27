@@ -7,7 +7,7 @@ interface UploadProfileImageResult {
 }
 
 /**
- * URLから画像をダウンロードしてSupabase Storageにアップロードする
+ * URLから画像をダウンロードしてオブジェクトストレージ（MinIO / R2）にアップロードする
  *
  * @param imageUrl - ダウンロードする画像のURL
  * @param userId - ユーザーID（ファイル名に使用）

@@ -1,3 +1,87 @@
+# Claude Code Spec-Driven Development
+
+Kiro-style Spec Driven Development implementation using claude code slash commands, hooks and agents.
+
+## Project Context
+
+### Paths
+
+- Steering: `.kiro/steering/`
+- Specs: `.kiro/specs/`
+- Commands: `.claude/commands/`
+
+### Steering vs Specification
+
+**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
+**Specs** (`.kiro/specs/`) - Formalize development process for individual features
+
+### Active Specifications
+
+- **cloudflare-r2-migration** — Cloudflare R2リモートストレージ移行計画（initialized 2025-09-27）
+- Check `.kiro/specs/` for active specifications
+- Use `/kiro:spec-status [feature-name]` to check progress
+
+## Development Guidelines
+
+- Think in English, but generate responses in Japanese (思考は英語、回答の生成は日本語で行うように)
+
+## Workflow
+
+### Phase 0: Steering (Optional)
+
+`/kiro:steering` - Create/update steering documents
+`/kiro:steering-custom` - Create custom steering for specialized contexts
+
+Note: Optional for new features or small additions. You can proceed directly to spec-init.
+
+### Phase 1: Specification Creation
+
+1. `/kiro:spec-init [detailed description]` - Initialize spec with detailed project description
+2. `/kiro:spec-requirements [feature]` - Generate requirements document
+3. `/kiro:spec-design [feature]` - Interactive: "Have you reviewed requirements.md? [y/N]"
+4. `/kiro:spec-tasks [feature]` - Interactive: Confirms both requirements and design review
+
+### Phase 2: Progress Tracking
+
+`/kiro:spec-status [feature]` - Check current progress and phases
+
+## Development Rules
+
+1. **Consider steering**: Run `/kiro:steering` before major development (optional for new features)
+2. **Follow 3-phase approval workflow**: Requirements → Design → Tasks → Implementation
+3. **Approval required**: Each phase requires human review (interactive prompt or manual)
+4. **No skipping phases**: Design requires approved requirements; Tasks require approved design
+5. **Update task status**: Mark tasks as completed when working on them
+6. **Keep steering current**: Run `/kiro:steering` after significant changes
+7. **Check spec compliance**: Use `/kiro:spec-status` to verify alignment
+
+## Steering Configuration
+
+### Current Steering Files
+
+Managed by `/kiro:steering` command. Updates here reflect command changes.
+
+### Active Steering Files
+
+- `product.md`: Always included - Product context and business objectives
+- `tech.md`: Always included - Technology stack and architectural decisions
+- `structure.md`: Always included - File organization and code patterns
+
+### Custom Steering Files
+
+<!-- Added by /kiro:steering-custom command -->
+<!-- Format:
+- `filename.md`: Mode - Pattern(s) - Description
+  Mode: Always|Conditional|Manual
+  Pattern: File patterns for Conditional mode
+-->
+
+### Inclusion Modes
+
+- **Always**: Loaded in every interaction (default)
+- **Conditional**: Loaded for specific file patterns (e.g., "\*.test.js")
+- **Manual**: Reference with `@filename.md` syntax
+
 # AGENTS.md
 
 This file provides guidance when working with code in this repository.
@@ -25,11 +109,13 @@ This file provides guidance when working with code in this repository.
 ### Environment Variables
 
 - **Database**: `DATABASE_URL` - PostgreSQL connection string
-- **Storage (Dev)**: 
-  - `DEV_MINIO_PORT` - MinIO API port (auto-generated)
-  - `DEV_MINIO_CONSOLE_PORT` - MinIO console port (auto-generated)
-  - `NEXT_PUBLIC_SUPABASE_URL` - Points to MinIO in development
-- **Storage (Prod)**: Uses Supabase Storage with proper credentials
+- **Storage (Dev)**:
+  - `MINIO_ENDPOINT` / `MINIO_BUCKET` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`
+  - `MINIO_PUBLIC_BASE_URL` - Public URL base (defaults to `${MINIO_ENDPOINT}/${MINIO_BUCKET}`)
+  - `MINIO_PORT` / `MINIO_CONSOLE_PORT` - Auto-generated ports for scripts and manual起動
+  - `MINIO_DATA_DIR` - Local data path (auto-generated)
+- `USE_R2` - Toggle for switching runtime to Cloudflare R2
+- **Storage (Prod)**: Cloudflare R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`)
 
 ## Development Commands
 
@@ -71,7 +157,7 @@ When using dev3000 for development monitoring:
 - **Styling**: Tailwind CSS v4
 - **UI**: Radix UI primitives with shadcn/ui pattern
 - **Database**: PostgreSQL (Homebrew) + Drizzle ORM
-- **Storage**: MinIO (S3互換) for development, Supabase Storage for production
+- **Storage**: MinIO (S3互換) for development, Cloudflare R2 for production
 - **Authentication**: Better Auth with email/password
 - **Forms**: React Hook Form + Zod + next-safe-action
 - **State**: Zustand for client-side state
@@ -99,8 +185,7 @@ When using dev3000 for development monitoring:
   - `queries/` - Data fetching logic
   - `schemas/` - Zod validation schemas
   - `services/` - Business services (auth, email, image upload)
-  - `storage/` - Unified storage interface (MinIO for dev, Supabase for prod)
-  - `supabase/` - Supabase client utilities (production only)
+  - `storage/` - Unified storage interface (MinIO for dev, R2 for prod)
   - `usecases/` - Application business logic
   - `utils/` - Utility functions and helpers
 - `test/` - Test utilities and helpers (Vitest)

@@ -6,40 +6,31 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/app/env.mjs';
+import {
+  PREFIX_CONFIGS,
+  type PrefixName,
+} from '@/lib/domain/storage/prefix-config';
+import { storageSettings } from '@/lib/storage/settings';
 
-// ローカル環境判定（開発・テスト環境でMinIOを使用）
-const isLocal =
-  process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-const isMinIO = isLocal && env.NEXT_PUBLIC_SUPABASE_URL.includes('localhost');
-
-// Supabaseクライアント
-export const supabaseClient = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+const s3Client = new S3Client({
+  endpoint:
+    storageSettings.mode === 'r2'
+      ? storageSettings.r2!.endpoint
+      : storageSettings.minio.endpoint,
+  region: storageSettings.mode === 'r2' ? 'auto' : 'us-east-1',
+  forcePathStyle: storageSettings.mode === 'minio',
+  credentials: {
+    accessKeyId:
+      storageSettings.mode === 'r2'
+        ? storageSettings.r2!.accessKeyId
+        : storageSettings.minio.accessKey,
+    secretAccessKey:
+      storageSettings.mode === 'r2'
+        ? storageSettings.r2!.secretAccessKey
+        : storageSettings.minio.secretKey,
   },
-);
-
-// S3/MinIOクライアント（開発環境用）
-export const s3Client = new S3Client({
-  endpoint: isMinIO ? env.NEXT_PUBLIC_SUPABASE_URL : undefined,
-  region: isMinIO ? 'us-east-1' : 'auto',
-  credentials: isMinIO
-    ? {
-        accessKeyId: 'minioadmin',
-        secretAccessKey: env.SUPABASE_SERVICE_ROLE_KEY || 'minioadmin',
-      }
-    : undefined,
-  forcePathStyle: isMinIO, // MinIO必須設定
 });
 
-// 統一Storageインターface
 export interface StorageUploadResult {
   data: { path: string } | null;
   error: Error | null;
@@ -49,13 +40,15 @@ export interface StoragePublicUrlResult {
   data: { publicUrl: string };
 }
 
+export interface StorageListResultItem {
+  name: string;
+  path: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface StorageListResult {
-  data: Array<{
-    name: string;
-    id?: string;
-    created_at?: string;
-    updated_at?: string;
-  }> | null;
+  data: StorageListResultItem[] | null;
   error: Error | null;
 }
 
@@ -64,62 +57,129 @@ export interface StorageRemoveResult {
   error: Error | null;
 }
 
-// バケット操作の統一クラス
+export interface SignedUploadPayload {
+  url: string;
+  headers: Record<string, string>;
+  path: string;
+  expiresAt: string;
+}
+
+interface SignedUploadOptions {
+  contentType: string;
+  expiresInSeconds?: number;
+}
+
+async function toBuffer(
+  body: File | Blob | Buffer,
+): Promise<Buffer | Uint8Array> {
+  if (Buffer.isBuffer(body)) {
+    return body;
+  }
+
+  if (body instanceof Uint8Array) {
+    return body;
+  }
+
+  if (typeof (body as Blob).arrayBuffer === 'function') {
+    const arrayBuffer = await (body as Blob).arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  throw new Error('Unsupported file body type for storage upload');
+}
+
+function stripPrefix(value: string, prefix: string): string {
+  if (!prefix) return value;
+  return value.startsWith(prefix) ? value.slice(prefix.length) : value;
+}
+
 export class UnifiedStorage {
-  constructor(private bucketName: string) {}
+  constructor(private readonly prefixName: string) {}
+
+  private resolveBucket(): string {
+    return storageSettings.resolveBucketName(this.prefixName);
+  }
+
+  private resolveKey(path: string): string {
+    return storageSettings.resolveObjectKey(this.prefixName, path);
+  }
+
+  private resolvePrefix(path?: string): string {
+    const normalizedPath = path ? path.replace(/^\/+|\/+$/g, '') : '';
+
+    if (!normalizedPath) {
+      return storageSettings
+        .resolveObjectKey(this.prefixName, '')
+        .replace(/\/?$/, '/');
+    }
+
+    return storageSettings.resolveObjectKey(
+      this.prefixName,
+      `${normalizedPath}/`,
+    );
+  }
 
   async upload(
     path: string,
     file: File | Blob | Buffer,
     options?: { contentType?: string; upsert?: boolean },
   ): Promise<StorageUploadResult> {
-    if (isMinIO) {
-      return this.uploadToS3(path, file, options);
-    } else {
-      return this.uploadToSupabase(path, file, options);
+    try {
+      const { bucketName, objectKey, body } = await this.prepareUpload(
+        path,
+        file,
+      );
+
+      const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: objectKey,
+        Body: body,
+        ContentType: options?.contentType,
+      });
+
+      await s3Client.send(command);
+
+      return { data: { path }, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
     }
   }
 
-  async createSignedUploadUrl(path: string): Promise<{
-    signedUrl: string;
-    token: string;
-    path: string;
-  }> {
-    if (isMinIO) {
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: path,
-      });
+  async createSignedUploadUrl(
+    path: string,
+    options: SignedUploadOptions,
+  ): Promise<SignedUploadPayload> {
+    const bucketName = this.resolveBucket();
+    const objectKey = this.resolveKey(path);
 
-      const signedUrl = await getSignedUrl(s3Client, command, {
-        expiresIn: 3600,
-      });
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: objectKey,
+      ContentType: options.contentType,
+    });
 
-      return {
-        signedUrl,
-        token: 'minio-token',
-        path,
-      };
-    } else {
-      const { data, error } = await supabaseClient.storage
-        .from(this.bucketName)
-        .createSignedUploadUrl(path);
+    const expiresIn = options.expiresInSeconds ?? 600; // default 10 minutes
 
-      if (error) throw error;
-      return data;
-    }
+    const url = await getSignedUrl(s3Client, command, {
+      expiresIn,
+    });
+
+    return {
+      url,
+      headers: {
+        'Content-Type': options.contentType,
+      },
+      path,
+      expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+    };
   }
 
   async getPublicUrl(path: string): Promise<StoragePublicUrlResult> {
-    if (isMinIO) {
-      return {
-        data: {
-          publicUrl: `${env.NEXT_PUBLIC_SUPABASE_URL}/${this.bucketName}/${path}`,
-        },
-      };
-    } else {
-      return supabaseClient.storage.from(this.bucketName).getPublicUrl(path);
-    }
+    const publicUrl = storageSettings.buildPublicUrl(this.prefixName, path);
+
+    return {
+      data: { publicUrl },
+    };
   }
 
   async list(
@@ -129,122 +189,72 @@ export class UnifiedStorage {
       sortBy?: { column: string; order: 'asc' | 'desc' };
     },
   ): Promise<StorageListResult> {
-    if (isMinIO) {
-      return this.listFromS3(path, options);
-    } else {
-      return this.listFromSupabase(path, options);
+    try {
+      const prefix = this.resolvePrefix(path);
+      const command = new ListObjectsV2Command({
+        Bucket: this.resolveBucket(),
+        Prefix: prefix,
+        MaxKeys: options?.limit ?? 100,
+      });
+
+      const response = await s3Client.send(command);
+      const basePrefix = storageSettings.resolveObjectKey(this.prefixName, '');
+
+      const items =
+        response.Contents?.flatMap((object) => {
+          const key = object.Key ?? '';
+          if (!key || key.endsWith('/')) {
+            return [];
+          }
+
+          const relativeKey = stripPrefix(key, basePrefix);
+
+          if (!relativeKey) {
+            return [];
+          }
+
+          const segments = relativeKey.split('/');
+          const name = segments[segments.length - 1] ?? relativeKey;
+
+          return [
+            {
+              name,
+              path: relativeKey,
+              created_at: object.LastModified?.toISOString(),
+              updated_at: object.LastModified?.toISOString(),
+            },
+          ];
+        }) ?? [];
+
+      if (options?.sortBy?.column === 'created_at') {
+        items.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+
+          return options.sortBy?.order === 'desc'
+            ? dateB - dateA
+            : dateA - dateB;
+        });
+      }
+
+      return { data: items, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
     }
   }
 
   async remove(paths: string[]): Promise<StorageRemoveResult> {
-    if (isMinIO) {
-      return this.removeFromS3(paths);
-    } else {
-      return this.removeFromSupabase(paths);
-    }
-  }
-
-  private async uploadToS3(
-    path: string,
-    file: File | Blob | Buffer,
-    options?: { contentType?: string; upsert?: boolean },
-  ): Promise<StorageUploadResult> {
     try {
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: path,
-        Body: file,
-        ContentType: options?.contentType,
-      });
+      const bucketName = this.resolveBucket();
+      const objects = paths.map((path) => ({ Key: this.resolveKey(path) }));
 
-      await s3Client.send(command);
-      return { data: { path }, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  }
-
-  private async uploadToSupabase(
-    path: string,
-    file: File | Blob | Buffer,
-    options?: { contentType?: string; upsert?: boolean },
-  ): Promise<StorageUploadResult> {
-    const { data, error } = await supabaseClient.storage
-      .from(this.bucketName)
-      .upload(path, file, {
-        contentType: options?.contentType,
-        upsert: options?.upsert,
-      });
-
-    return { data, error };
-  }
-
-  private async listFromS3(
-    path?: string,
-    options?: {
-      limit?: number;
-      sortBy?: { column: string; order: 'asc' | 'desc' };
-    },
-  ): Promise<StorageListResult> {
-    try {
-      const command = new ListObjectsV2Command({
-        Bucket: this.bucketName,
-        Prefix: path || '',
-        MaxKeys: options?.limit || 100,
-      });
-
-      const response = await s3Client.send(command);
-
-      const files =
-        response.Contents?.map((item) => ({
-          name: item.Key ? item.Key.split('/').pop() || '' : '',
-          created_at: item.LastModified?.toISOString(),
-        })) || [];
-
-      // ソート処理
-      if (options?.sortBy) {
-        files.sort((a, b) => {
-          if (options.sortBy?.column === 'created_at') {
-            const dateA = new Date(a.created_at || 0).getTime();
-            const dateB = new Date(b.created_at || 0).getTime();
-            return options.sortBy.order === 'desc'
-              ? dateB - dateA
-              : dateA - dateB;
-          }
-          return 0;
-        });
-      }
-
-      return { data: files, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  }
-
-  private async listFromSupabase(
-    path?: string,
-    options?: {
-      limit?: number;
-      sortBy?: { column: string; order: 'asc' | 'desc' };
-    },
-  ): Promise<StorageListResult> {
-    const { data, error } = await supabaseClient.storage
-      .from(this.bucketName)
-      .list(path, options);
-
-    return { data, error };
-  }
-
-  private async removeFromS3(paths: string[]): Promise<StorageRemoveResult> {
-    try {
       const command = new DeleteObjectsCommand({
-        Bucket: this.bucketName,
-        Delete: {
-          Objects: paths.map((path) => ({ Key: path })),
-        },
+        Bucket: bucketName,
+        Delete: { Objects: objects },
       });
 
       await s3Client.send(command);
+
       return {
         data: paths.map((path) => ({ name: path })),
         error: null,
@@ -254,31 +264,32 @@ export class UnifiedStorage {
     }
   }
 
-  private async removeFromSupabase(
-    paths: string[],
-  ): Promise<StorageRemoveResult> {
-    const { data, error } = await supabaseClient.storage
-      .from(this.bucketName)
-      .remove(paths);
+  private async prepareUpload(
+    path: string,
+    file: File | Blob | Buffer,
+  ): Promise<{
+    bucketName: string;
+    objectKey: string;
+    body: Buffer | Uint8Array;
+  }> {
+    const bucketName = this.resolveBucket();
+    const objectKey = this.resolveKey(path);
+    const body = await toBuffer(file);
 
-    return { data, error };
+    return {
+      bucketName,
+      objectKey,
+      body,
+    };
   }
 }
 
-import {
-  BUCKET_CONFIGS,
-  type BucketName,
-} from '@/lib/domain/storage/bucket-config';
-
-// バケット設定から動的にStorageインスタンスを生成
 export const storage = Object.fromEntries(
-  Object.keys(BUCKET_CONFIGS).map((bucketName) => [
-    bucketName,
-    new UnifiedStorage(bucketName),
+  Object.keys(PREFIX_CONFIGS).map((prefixKey) => [
+    prefixKey,
+    new UnifiedStorage(prefixKey),
   ]),
-) as Record<BucketName, UnifiedStorage>;
+) as Record<PrefixName, UnifiedStorage>;
 
-// 新しいバケットを追加する手順:
-// 1. bucket-config.ts の BUCKET_CONFIGS に追加（自動的にstorageに反映される）
-// 2. supabase/config.toml に [storage.buckets.xxx] を追加（本番環境用）
-// 3. MinIO起動時: /dev:create-storage-bucket xxx（開発環境用）
+// 新しいプレフィックス（例: documents/）を使いたい場合は prefix-config.ts の PREFIX_CONFIGS に定義を追加するだけでOK。
+// 実際には MinIO / R2 の共有バケット `app` 配下に `${prefix}/...` というキーで保存される。

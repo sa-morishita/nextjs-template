@@ -53,8 +53,8 @@ GitHub issueの番号を指定して、適切な名前のワークツリーと�
    
    # 環境変数から実際のポート番号を取得して表示
    !source .env.local 2>/dev/null && echo "🚀 MinIOストレージサーバーが自動的に起動されました"
-   !source .env.local 2>/dev/null && echo "   📡 API: http://localhost:$DEV_MINIO_PORT"
-   !source .env.local 2>/dev/null && echo "   🌐 Console: http://localhost:$DEV_MINIO_CONSOLE_PORT (minioadmin/minioadmin)"
+   !source .env.local 2>/dev/null && echo "   📡 API: http://localhost:$MINIO_PORT"
+   !source .env.local 2>/dev/null && echo "   🌐 Console: http://localhost:$MINIO_CONSOLE_PORT (minioadmin/minioadmin)"
    !source .env.local 2>/dev/null && echo "   📦 バケット管理はConsoleから行えます"
    !echo ""
    !source .env.local 2>/dev/null && echo "🎨 Drizzle Studio (データベース管理)"

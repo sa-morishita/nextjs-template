@@ -10,8 +10,8 @@ import '@/test/storage-setup'; // パッチを適用
 /**
  * Profile Image Service Storage結合テスト
  *
- * ローカルSupabaseインスタンスを使用した実際のStorage操作テスト
- * 実行前に `supabase start` でローカルインスタンスを起動する必要があります
+ * ローカルの MinIO インスタンスを使用した実際のStorage操作テスト
+ * 実行前に `.document/scripts/setup-development-environment.sh` などで MinIO を起動してください
  */
 
 // Sentryをモック
@@ -66,22 +66,11 @@ describe('Profile Image Service Storage結合テスト', () => {
 
         // クリーンアップ用にファイルパスを記録
         if (result.url) {
-          // MinIO/Supabase両対応のURL解析
           const urlParts = new URL(result.url);
-          let filePath: string | undefined;
-
-          // Supabase URL pattern: /storage/v1/object/public/avatars/...
-          const supabaseMatch = urlParts.pathname.match(
-            /\/storage\/v1\/object\/public\/avatars\/(.*)/,
-          );
-
-          // MinIO URL pattern: /avatars/...
           const minioMatch = urlParts.pathname.match(/\/avatars\/(.*)/);
 
-          filePath = supabaseMatch?.[1] || minioMatch?.[1];
-
-          if (filePath) {
-            uploadedFiles.push(filePath);
+          if (minioMatch?.[1]) {
+            uploadedFiles.push(minioMatch[1]);
           }
         }
       });

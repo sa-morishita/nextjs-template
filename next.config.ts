@@ -1,5 +1,31 @@
 import { withSentryConfig } from '@sentry/nextjs';
+import type { RemotePattern } from 'next/dist/shared/lib/image-config';
 import type { NextConfig } from 'next/types';
+
+const r2RemotePattern: RemotePattern | null = (() => {
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL;
+  if (!baseUrl) return null;
+
+  try {
+    const url = new URL(baseUrl);
+    const protocol = url.protocol.replace(':', '');
+    if (protocol !== 'http' && protocol !== 'https') {
+      throw new Error(
+        `Unsupported protocol for R2_PUBLIC_BASE_URL: ${protocol}`,
+      );
+    }
+
+    return {
+      protocol,
+      hostname: url.hostname,
+      port: url.port,
+      pathname: '/**',
+    } as const;
+  } catch (error) {
+    console.warn('[next.config] Invalid R2_PUBLIC_BASE_URL: ', error);
+    return null;
+  }
+})();
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
@@ -10,13 +36,8 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
         port: '',
       },
-      // Supabase Storage - Production
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/**',
-      },
+      // Cloudflare R2 (custom domain)
+      ...(r2RemotePattern ? [r2RemotePattern] : []),
       // MinIO - Local Development (direct bucket access)
       {
         protocol: 'http',

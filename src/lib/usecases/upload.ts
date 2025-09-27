@@ -25,8 +25,11 @@ interface UsecaseContext {
 export type GenerateUploadUrlInput = z.infer<typeof getSignedUploadUrlSchema>;
 
 interface UploadUrlResult {
-  signedUrl: string;
+  url: string;
+  headers: Record<string, string>;
   publicUrl: string;
+  expiresAt: string;
+  path: string;
 }
 
 /**
@@ -58,16 +61,19 @@ export async function generateDiaryImageUploadUrl(
   }
 
   // Presigned URLの生成
-  const { signedUrl, publicUrl } = await generateUploadUrl({
+  const { url, headers, publicUrl, expiresAt, path } = await generateUploadUrl({
     userId,
     fileName,
     fileType,
     fileSize,
-    bucket: 'diaries',
+    prefix: 'diaries',
   });
 
   return {
-    signedUrl,
+    url,
+    headers,
     publicUrl,
+    expiresAt,
+    path,
   };
 }

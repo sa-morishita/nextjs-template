@@ -87,13 +87,13 @@ UI Component → Server Action → Usecase → Service → Storage
 
 ### バリデーション
 
-**ファイル**: 
+**ファイル**:
 - `src/lib/schemas/upload.ts`: 基本バリデーション
-- `src/lib/domain/storage/bucket-config.ts`: バケット別設定
+- `src/lib/domain/storage/prefix-config.ts`: プレフィックスごとの設定
 
 **検証内容**:
 - `validateFile()`: 統一ファイル検証関数
-  - バケット設定に基づくMIME型チェック
+  - プレフィックス設定に基づくMIME型チェック
   - ファイルサイズ上限チェック
   - エラーメッセージの日本語対応
 
@@ -149,7 +149,7 @@ _containers/diary-form/
 1. **認証必須**: `privateActionClient`使用
 2. **ユーザー分離**: `userId`による権限制御
 3. **ファイル制限**: 
-   - バケット設定による統一制限
+  - プレフィックス設定による統一制限
    - MIME型ホワイトリスト方式
    - ファイルサイズ上限（5MB）
    - UUID による安全なファイル名生成
@@ -169,20 +169,20 @@ _containers/diary-form/
 
 ### 統一Storageアーキテクチャ（2025-09-21更新）
 
-**実装ファイル**: 
+**実装ファイル**:
 - `src/lib/storage/client.ts`: 統一Storageインターフェース
-- `src/lib/domain/storage/bucket-config.ts`: バケット設定管理
+- `src/lib/domain/storage/prefix-config.ts`: プレフィックス設定管理
 
 **環境別実装**:
 - **開発/テスト環境**: MinIO (S3互換ストレージ)
   - 自動起動設定済み
   - ポート自動割り当て
-- **本番環境**: Supabase Storage
-  - RLS (Row Level Security) による権限制御
+- **本番環境**: Cloudflare R2
+  - 共有バケット `app` の配下に `diaries/` などのプレフィックスで保存
 
-### バケット設定
+### プレフィックス設定
 
-**バケット名**: `diaries`
+**プレフィックス**: `diaries/`
 - **パス構造**: `{userId}/{uniqueId}.{拡張子}`
 - **最大ファイルサイズ**: 5MB
 - **許可MIME型**: 
@@ -190,7 +190,7 @@ _containers/diary-form/
   - image/jpg  
   - image/png
   - image/webp
-- **アクセス**: パブリック
+- **アクセス**: パブリック（共有バケット `app` 内のプレフィックスとして公開）
 
 ### ファイルアップロードフロー
 

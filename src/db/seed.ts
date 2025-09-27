@@ -14,7 +14,8 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 // 本番環境での実行を防ぐ
 if (
   process.env.NODE_ENV === 'production' ||
-  process.env.DATABASE_URL?.includes('supabase.co')
+  process.env.DATABASE_URL?.includes('supabase.co') ||
+  process.env.DATABASE_URL?.includes('neon.tech')
 ) {
   console.log('❌ Cannot seed production database');
   process.exit(0);

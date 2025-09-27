@@ -92,7 +92,16 @@
       "Bash(mc anonymous set:*)",
       "Bash(mc ls:*)",
       "Bash(npx tsc:*)",
-      "mcp__serena__list_memories"
+      "mcp__serena__list_memories",
+      "Bash(psql:*)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "Bash(openssl s_client:*)",
+      "Bash(mkcert:*)",
+      "Bash(security find-certificate:*)",
+      "WebFetch(domain:neon.com)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:www.convex.dev)",
+      "WebFetch(domain:developers.cloudflare.com)"
     ],
     "deny": []
   },

@@ -17,8 +17,8 @@
 - **Framework**: Next.js 15.5 (App Router) + React 19
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS v4 + shadcn/ui
-- **Database**: PostgreSQL (ローカル) / Supabase (本番) + Drizzle ORM
-- **Storage**: MinIO (ローカル) / Supabase Storage (本番)
+- **Database**: PostgreSQL (ローカル) / Neon (本番) + Drizzle ORM
+- **Storage**: MinIO (ローカル) / Cloudflare R2 (本番)
 - **Authentication**: Better Auth
 - **Forms**: React Hook Form + Zod + next-safe-action
 - **Testing**: Vitest + React Testing Library + Playwright (E2E)
@@ -63,7 +63,7 @@ pnpm db:migrate:dev
 
 ```bash
 # Claude Codeでカスタムコマンドを実行
-/dev/setup-storage
+/dev/setup-storage    # 起動と app バケット初期化まで自動
 ```
 
 ### 開発サーバーの起動
@@ -86,11 +86,15 @@ pnpm dev  # turbopackを使用した高速開発サーバー
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 
 # ローカルストレージ設定（MinIO）
-NEXT_PUBLIC_SUPABASE_URL="http://localhost:xxxxx"  # MinIO APIポート
-SUPABASE_SERVICE_ROLE_KEY="minioadmin"
-DEV_MINIO_PORT=xxxxx         # プロジェクト固有のポート
-DEV_MINIO_CONSOLE_PORT=xxxxx # プロジェクト固有のポート
-DEV_MINIO_DATA_DIR="./dev-minio-xxxxxxxx"
+MINIO_ENDPOINT="http://localhost:xxxxx"  # MinIO APIポート
+MINIO_BUCKET="app"
+MINIO_ACCESS_KEY="minioadmin"
+MINIO_SECRET_KEY="minioadmin"
+MINIO_PUBLIC_BASE_URL="http://localhost:xxxxx/app"
+MINIO_PORT=xxxxx             # MinIO APIポート (上記ENDPOINTと揃える)
+MINIO_CONSOLE_PORT=xxxxx     # MinIO Consoleポート
+MINIO_DATA_DIR="./dev-minio-xxxxxxxx"
+USE_R2="false"
 
 # データベース設定（PostgreSQL）
 DATABASE_URL="postgresql://localhost:5432/プロジェクト名_main_dev"
@@ -162,7 +166,6 @@ src/
 │   ├── schemas/          # Zodバリデーションスキーマ
 │   ├── services/         # ビジネスサービス
 │   │   └── auth/        # Better Auth設定と認証サービス
-│   ├── supabase/         # Supabaseクライアントとストレージユーティリティ
 │   ├── usecases/         # アプリケーションビジネスロジック
 │   └── utils/            # ユーティリティ関数
 └── test/                  # テストユーティリティ
@@ -217,9 +220,15 @@ e2e/                       # E2Eテスト (Playwright)
 
    ```bash
    NEXT_PUBLIC_SITE_URL="https://your-domain.com"
-   NEXT_PUBLIC_SUPABASE_URL="https://xxxxx.supabase.co"
-   SUPABASE_SERVICE_ROLE_KEY=<Supabaseダッシュボードから取得>
-   DATABASE_URL="postgres://postgres.xxxxx:password@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+   # ストレージ設定（Cloudflare R2 使用）
+   USE_R2="true"
+   R2_ACCOUNT_ID=<Cloudflare ダッシュボードで確認>
+   R2_ACCESS_KEY_ID=<Cloudflare R2 API Token Access Key>
+   R2_SECRET_ACCESS_KEY=<Cloudflare R2 API Token Secret>
+   R2_BUCKET=<利用するR2バケット名>
+   R2_PUBLIC_BASE_URL=<画像配信に利用するカスタムドメインまたは公開URL>
+   # データベース設定（Neon pooler endpoint使用）
+   DATABASE_URL="postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require"
    BETTER_AUTH_SECRET=<本番用に新しく生成>
    RESEND_API_KEY=<本番用APIキー>
    LINE_LOGIN_CHANNEL_ID=<LINE Developersから取得>
@@ -234,11 +243,12 @@ e2e/                       # E2Eテスト (Playwright)
 
 ### データベース設定
 
-**本番環境では必ずConnection Pooler URLを使用してください：**
+**本番環境では必ずNeonのpooled connectionを使用してください：**
 
-- Supabase Dashboard > Settings > Database > Connection Pooler
-- Mode: Transaction
-- Port: 6543
+- Neon Dashboard > Connection Details
+- Pooled connectionにチェック
+- エンドポイントに`-pooler`が付いていることを確認
+- SSL Mode: require
 
 ## トラブルシューティング
 
@@ -263,7 +273,7 @@ ps aux | grep minio
 
 # MinIOを再起動
 source .env.local
-minio server "$DEV_MINIO_DATA_DIR" --address ":$DEV_MINIO_PORT" --console-address ":$DEV_MINIO_CONSOLE_PORT"
+minio server "$MINIO_DATA_DIR" --address ":$MINIO_PORT" --console-address ":$MINIO_CONSOLE_PORT"
 ```
 
 ### データベース接続エラー
@@ -272,8 +282,8 @@ minio server "$DEV_MINIO_DATA_DIR" --address ":$DEV_MINIO_PORT" --console-addres
 # データベースの存在確認
 psql -U $USER -l
 
-# ローカル: ポート5432を使用
-# 本番: Supabase Connection Pooler (ポート6543)を使用
+# ローカル: PostgreSQL ポート5432を使用
+# 本番: Neon pooled connection (-pooler付きエンドポイント)を使用
 ```
 
 ### Better Auth エラー

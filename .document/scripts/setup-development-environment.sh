@@ -78,22 +78,30 @@ for example_file in .env*.example; do
                 if [[ "$OSTYPE" == "darwin"* ]]; then
                     # macOS
                     sed -i '' "s|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|" "$env_file"
-                    sed -i '' "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
-                    sed -i '' "s|^SUPABASE_SERVICE_ROLE_KEY=$|SUPABASE_SERVICE_ROLE_KEY=minioadmin|" "$env_file"
+                    sed -i '' "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
+                    sed -i '' "s|^MINIO_ACCESS_KEY=.*|MINIO_ACCESS_KEY=minioadmin|" "$env_file"
+                    sed -i '' "s|^MINIO_SECRET_KEY=.*|MINIO_SECRET_KEY=minioadmin|" "$env_file"
+                    sed -i '' "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
+                    sed -i '' "s|^USE_R2=.*|USE_R2=false|" "$env_file"
                     sed -i '' "s|^DATABASE_URL=$|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" "$env_file"
-                    sed -i '' "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
-                    sed -i '' "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
-                    sed -i '' "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                    sed -i '' "s|^MINIO_PORT=$|MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_CONSOLE_PORT=$|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_DATA_DIR=$|MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
                     sed -i '' "s|^DRIZZLE_STUDIO_PORT=$|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" "$env_file"
                 else
                     # Linux
                     sed -i "s|^NEXT_PUBLIC_SITE_URL=$|NEXT_PUBLIC_SITE_URL=http://localhost:3000|" "$env_file"
-                    sed -i "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
-                    sed -i "s|^SUPABASE_SERVICE_ROLE_KEY=$|SUPABASE_SERVICE_ROLE_KEY=minioadmin|" "$env_file"
+                    sed -i "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
+                    sed -i "s|^MINIO_ACCESS_KEY=.*|MINIO_ACCESS_KEY=minioadmin|" "$env_file"
+                    sed -i "s|^MINIO_SECRET_KEY=.*|MINIO_SECRET_KEY=minioadmin|" "$env_file"
+                    sed -i "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
+                    sed -i "s|^USE_R2=.*|USE_R2=false|" "$env_file"
                     sed -i "s|^DATABASE_URL=$|DATABASE_URL=postgresql://localhost:5432/$DB_NAME|" "$env_file"
-                    sed -i "s|^DEV_MINIO_PORT=$|DEV_MINIO_PORT=$MINIO_PORT|" "$env_file"
-                    sed -i "s|^DEV_MINIO_CONSOLE_PORT=$|DEV_MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
-                    sed -i "s|^DEV_MINIO_DATA_DIR=$|DEV_MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
+                    sed -i "s|^MINIO_PORT=$|MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_CONSOLE_PORT=$|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
+                    sed -i "s|^MINIO_DATA_DIR=$|MINIO_DATA_DIR=$MINIO_DATA_DIR|" "$env_file"
                     sed -i "s|^DRIZZLE_STUDIO_PORT=$|DRIZZLE_STUDIO_PORT=$DRIZZLE_STUDIO_PORT|" "$env_file"
                 fi
                 echo "🔧 開発環境用の設定値を $env_file に適用しました"
@@ -104,10 +112,14 @@ for example_file in .env*.example; do
                 # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
                 if [[ "$OSTYPE" == "darwin"* ]]; then
                     # macOS
-                    sed -i '' "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
+                    sed -i '' "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
                 else
                     # Linux
-                    sed -i "s|^NEXT_PUBLIC_SUPABASE_URL=$|NEXT_PUBLIC_SUPABASE_URL=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
+                    sed -i "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
                 fi
                 echo "🔧 テスト環境用のMinIOポートを $env_file に設定しました: $MINIO_PORT"
             fi

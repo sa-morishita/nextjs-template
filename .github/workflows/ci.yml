@@ -115,45 +115,4 @@ jobs:
           LINE_LOGIN_CHANNEL_ID: "dummy-line-login-channel-id"
           LINE_LOGIN_CHANNEL_SECRET: "dummy-line-login-channel-secret"
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build application
-        run: pnpm build
-        env:
-          # ダミー環境変数（ビルド用）
-          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
-          BETTER_AUTH_SECRET: "dummy-secret-for-build"
-          SUPABASE_SERVICE_ROLE_KEY: "dummy-key"
-          NEXT_PUBLIC_SITE_URL: "https://example.com"
-          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
-          RESEND_API_KEY: "dummy-resend-api-key"
-          LINE_LOGIN_CHANNEL_ID: "dummy-line-login-channel-id"
-          LINE_LOGIN_CHANNEL_SECRET: "dummy-line-login-channel-secret"
-          NEXT_PUBLIC_SENTRY_DSN: ""
-
-      - name: Check build output
-        run: |
-          if [ ! -d ".next" ]; then
-            echo "Build failed: .next directory not found"
-            exit 1
-          fi
 

@@ -25,7 +25,7 @@ description: "開発環境のMinIOを停止"
 
 5. 念のためプロセスを確認
    !sleep 1
-   !pgrep -f "minio server.*$DEV_MINIO_PORT" > /dev/null && (echo "⚠️  MinIOプロセスがまだ残っています" && pkill -f "minio server.*$DEV_MINIO_PORT") || echo "✅ MinIOプロセスは完全に停止しました"
+   !source .env.local && pgrep -f "minio server.*$MINIO_PORT" > /dev/null && (echo "⚠️  MinIOプロセスがまだ残っています" && pkill -f "minio server.*$MINIO_PORT") || echo "✅ MinIOプロセスは完全に停止しました"
 
 6. 完了メッセージ
    !echo ""

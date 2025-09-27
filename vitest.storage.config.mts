@@ -13,8 +13,8 @@ import { defineConfig } from 'vitest/config';
  * 対象ファイル: glob pattern *.storage.test.ts のみ
  *
  * 特徴:
- * - Node.js環境で実行（Supabase Storage API使用のため）
- * - ローカルSupabaseインスタンスに接続
+ * - Node.js環境で実行（S3互換API使用のため）
+ * - ローカルMinIOまたはR2に接続
  * - 実際のファイルアップロード/ダウンロードをテスト
  * - テスト用バケットを使用して本番データと分離
  */

@@ -131,7 +131,7 @@ UI Component → Server Action → Service Layer → Better Auth
 
 ### Storage設定
 
-**バケット**: `avatars`
+**プレフィックス**: `avatars/`
 - **保存パス**: `{userId}/profile-{timestamp}.{ext}`
 - **最大サイズ**: 5MB
 - **許可MIME型**: image/jpeg, image/png, image/webp

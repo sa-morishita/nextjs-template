@@ -85,7 +85,10 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
       if (result.data && pendingFile) {
         try {
           // Presigned URLを使ってクライアントから直接アップロード
-          await uploadFileWithSignedUrl(pendingFile, result.data.signedUrl);
+          await uploadFileWithSignedUrl(pendingFile, {
+            url: result.data.url,
+            headers: result.data.headers,
+          });
 
           setUploadedImageUrl(result.data.publicUrl);
           form.setValue('imageUrl', result.data.publicUrl);

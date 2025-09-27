@@ -3,7 +3,7 @@ import { storage, type UnifiedStorage } from '@/lib/storage/client';
 
 /**
  * Storage結合テスト用のセットアップ
- * MinIO/Supabase Storage との接続を設定
+ * MinIO / Cloudflare R2 Storage との接続を設定
  */
 
 // グローバルfetchのタイムアウト設定

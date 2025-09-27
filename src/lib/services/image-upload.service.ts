@@ -3,9 +3,9 @@
  */
 import 'server-only';
 import {
-  type BucketName,
+  type PrefixName,
   validateFile,
-} from '@/lib/domain/storage/bucket-config';
+} from '@/lib/domain/storage/prefix-config';
 import { storage } from '@/lib/storage/client';
 
 /**
@@ -16,17 +16,18 @@ export interface GenerateUploadUrlInput {
   fileName: string;
   fileType: string;
   fileSize: number;
-  bucket: BucketName; // バケット名を指定
+  prefix: PrefixName; // プレフィックス名を指定
 }
 
 /**
  * 画像アップロード用のPresigned URL生成結果型
  */
 export interface GenerateUploadUrlResult {
-  signedUrl: string;
-  token: string;
+  url: string;
+  headers: Record<string, string>;
   path: string;
   publicUrl: string;
+  expiresAt: string;
 }
 
 /**
@@ -38,8 +39,8 @@ export interface GenerateUploadUrlResult {
 export async function generateUploadUrl(
   input: GenerateUploadUrlInput,
 ): Promise<GenerateUploadUrlResult> {
-  // バケット設定に基づいたファイル検証
-  const validation = validateFile(input.bucket, {
+  // プレフィックス設定に基づいたファイル検証
+  const validation = validateFile(input.prefix, {
     type: input.fileType,
     size: input.fileSize,
   });
@@ -57,20 +58,25 @@ export async function generateUploadUrl(
   const uniqueFileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
   const filePath = `${folderName}/${uniqueFileName}`;
 
-  // バケットに応じたストレージクライアントを選択
-  const storageInstance = storage[input.bucket];
+  // プレフィックスに応じたストレージクライアントを選択
+  const storageInstance = storage[input.prefix];
 
   // Presigned Upload URL生成
-  const data = await storageInstance.createSignedUploadUrl(filePath);
+  const signedPayload = await storageInstance.createSignedUploadUrl(filePath, {
+    contentType: input.fileType,
+  });
 
   // 公開URL事前生成
-  const publicUrlResult = await storageInstance.getPublicUrl(data.path);
+  const publicUrlResult = await storageInstance.getPublicUrl(
+    signedPayload.path,
+  );
   const publicUrl = publicUrlResult.data.publicUrl;
 
   return {
-    signedUrl: data.signedUrl,
-    token: data.token,
-    path: data.path,
+    url: signedPayload.url,
+    headers: signedPayload.headers,
+    path: signedPayload.path,
     publicUrl,
+    expiresAt: signedPayload.expiresAt,
   };
 }

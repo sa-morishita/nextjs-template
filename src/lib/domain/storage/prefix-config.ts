@@ -1,16 +1,16 @@
 /**
- * ストレージバケットの設定を定義
+ * ストレージプレフィックスの設定を定義
  */
 
-export interface BucketConfig {
+export interface PrefixConfig {
   name: string;
   maxFileSize: number; // bytes
   allowedMimeTypes: string[];
   isPublic: boolean;
 }
 
-// バケット設定の定義（プロジェクトに応じて変更可能）
-export const BUCKET_CONFIGS: Record<string, BucketConfig> = {
+// プレフィックス設定の定義（プロジェクトに応じて変更可能）
+export const PREFIX_CONFIGS: Record<string, PrefixConfig> = {
   avatars: {
     name: 'avatars',
     maxFileSize: 5 * 1024 * 1024, // 5MB
@@ -32,21 +32,21 @@ export const BUCKET_CONFIGS: Record<string, BucketConfig> = {
   // },
 };
 
-// バケット名の型安全な取得
-export type BucketName = keyof typeof BUCKET_CONFIGS;
+// プレフィックス名の型安全な取得
+export type PrefixName = keyof typeof PREFIX_CONFIGS;
 
 // ヘルパー関数
-export function getBucketConfig(bucketName: string): BucketConfig | undefined {
-  return BUCKET_CONFIGS[bucketName];
+export function getPrefixConfig(prefixName: string): PrefixConfig | undefined {
+  return PREFIX_CONFIGS[prefixName];
 }
 
 export function validateFile(
-  bucketName: string,
+  prefixName: string,
   file: { type: string; size: number },
 ): { valid: boolean; error?: string } {
-  const config = getBucketConfig(bucketName);
+  const config = getPrefixConfig(prefixName);
   if (!config) {
-    return { valid: false, error: 'Invalid bucket name' };
+    return { valid: false, error: 'Invalid prefix name' };
   }
 
   // MIMEタイプチェック

@@ -48,7 +48,7 @@ description: "公式ドキュメントを優先して技術情報を検索"
    - 使い方: "Next.js 15 app router best practices 2025年8月"
    - 実装方法: "React Server Components implementation guide 2025"
    - エラー解決: "[エラーコード] TypeScript official docs 2025年8月"
-   - 統合方法: "Supabase Next.js integration site:supabase.com 2025"
+   - 統合方法: "Cloudflare R2 Next.js integration site:developers.cloudflare.com 2025"
    - パフォーマンス: "React performance optimization techniques 2025"
 
 3. 情報源の優先順位
@@ -81,7 +81,7 @@ description: "公式ドキュメントを優先して技術情報を検索"
 ```
 /dev:arg-research Next.js 15 App Router の使い方
 /dev:arg-research React Server Components のベストプラクティス
-/dev:arg-research Supabase と Next.js の統合方法
+/dev:arg-research Cloudflare R2 と Next.js の統合方法
 /dev:arg-research TypeScript error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'
 /dev:arg-research Vitest でReact Hookのテスト方法
 /dev:arg-research Tailwind CSS v4 の新機能
