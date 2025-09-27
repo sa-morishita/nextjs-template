@@ -1,230 +1,46 @@
-# Project Structure
+# プロジェクト構造
+最終更新: 2025-09-27
 
-## Root Directory Organization
+## ルートディレクトリ構成
+- `src/` : アプリケーション本体。App Router、ドメインロジック、テストユーティリティを格納。
+- `e2e/` : Playwright による E2E テスト一式（specs, global setup/teardown）。
+- `.document/scripts/` : 開発環境セットアップなどの補助スクリプト。
+- `.claude/commands/` : Claude Code コマンド定義（kiro ワークフロー含む）。
+- `.github/workflows/` : CI/CD 定義。`ci.yml`, `e2e.yml`, `security.yml` 等。
+- `drizzle/` : Drizzle によるマイグレーション出力。
+- `dev-minio-*` : MinIO ローカルデータ（自動生成、Git 管理外）。
 
-```
-nextjs-template/
-├── .claude/               # Claude Code設定
-│   └── commands/          # カスタムコマンド定義
-├── .document/             # プロジェクトドキュメント
-│   ├── architecture/      # アーキテクチャ設計書
-│   ├── scripts/           # セットアップスクリプト
-│   └── specs/             # 機能仕様書
-├── .github/               # GitHub設定
-│   └── workflows/         # GitHub Actions CI/CD
-├── .kiro/                 # Kiro Spec-Driven Development
-│   ├── steering/          # プロジェクトガイドライン
-│   └── specs/             # 機能仕様書
-├── e2e/                   # E2Eテスト（Playwright）
-├── public/                # 静的ファイル
-├── src/                   # ソースコード
-└── test/                  # テストユーティリティ
-```
+## `src/` 配下の詳細
+- `app/`
+  - `(auth)/auth/...` : サインアップ・ログイン・メール検証・パスワードリセットの各ページとフォーム。
+  - `(protected)/dashboard/...` : 認証後のダッシュボード、TODO・Diary の一覧/編集。`_containers` で Container/Presentational を分離。
+  - `layout.tsx` : `RootLayout`。NuqsAdapter と Toaster を組み込み、lang="ja" を設定。
+  - `error.tsx`, `not-found.tsx`, `global-error.tsx` : エラーハンドリング用コンポーネント。
+- `lib/`
+  - `actions/` : next-safe-action で定義した Server Actions（例: `createTodoAction`）。
+  - `usecases/` : ビジネスロジック層。入力バリデーションや重複チェックを担当。
+  - `mutations/`, `queries/`, `services/`, `storage/` : データアクセスや外部サービス連携を分担。
+  - `schemas/`, `constants/`, `utils/`, `types/` : Zod スキーマ、定数、ユーティリティ。
+- `db/`
+  - `schema/` : Drizzle のテーブル定義 (`auth.ts`, `todos.ts`, `diaries.ts`)。
+  - `seed.ts` : 開発用初期データ投入。
+- `components/` : 再利用 UI コンポーネント（shadcn/ui パターン）。
+- `hooks/` : カスタムフック。
+- `test/` : Vitest 用テスト支援。factories/helpers/mocks、および `setup.ts` 等。
 
-## Subdirectory Structures
+## テスト構成
+- ユニット: `src/app/**/__tests__`, `src/lib/usecases/__tests__` に Vitest ファイル。
+- 統合: `src/lib/usecases/__tests__/*.integration.test.ts`。
+- ストレージ: `vitest.storage.config.mts` と `src/test/storage-setup.ts` 等で設定。
+- E2E: `e2e/specs/*.spec.ts`（Playwright）。
 
-### `src/app/` - Next.js App Router
+## 命名規則とパターン
+- ディレクトリはケバブケース、ファイルは用途に応じてケバブまたはキャメル（例: `task-form.tsx`）。
+- Container/Presentational パターン: `_containers/{index,container,presentational}.tsx` をワンセットで配置。
+- Server Action は `*Action`、ユースケースは `*Usecase`。ドメイン関数は `create*`, `get*`, `update*`, `delete*` などの動詞プレフィックス。
+- Zod スキーマは `*Schema`、キャッシュタグは `CACHE_TAGS.*`。
 
-```
-app/
-├── (auth)/                # 認証グループルート
-│   └── auth/              # 認証ページ
-│       ├── _components/   # 認証コンポーネント
-│       ├── login/         # ログインページ
-│       ├── signup/        # サインアップページ
-│       ├── forgot-password/ # パスワード忘れ
-│       ├── reset-password/  # パスワードリセット
-│       └── verify-email/    # メール認証
-├── (protected)/           # 保護されたルート
-│   └── dashboard/         # ダッシュボード
-│       ├── (home)/        # ホーム（TODO・日記一覧）
-│       ├── tasks/         # TODO管理
-│       └── diary/         # 日記管理
-├── api/                   # APIルート
-│   └── auth/[...all]/     # Better Auth APIエンドポイント
-├── error.tsx              # エラーバウンダリ
-├── layout.tsx             # ルートレイアウト
-└── not-found.tsx          # 404ページ
-```
-
-### `src/components/` - UIコンポーネント
-
-```
-components/
-├── auth/                  # 認証関連コンポーネント
-│   ├── auth-form-wrapper.tsx
-│   └── user-button.tsx
-├── dashboard/             # ダッシュボードレイアウト
-│   ├── app-sidebar.tsx    # サイドバー
-│   └── dashboard-layout.tsx
-└── ui/                    # 基本UIコンポーネント
-    ├── button.tsx
-    ├── form.tsx
-    ├── dialog.tsx
-    └── ... (shadcn/ui components)
-```
-
-### `src/lib/` - コアアプリケーションロジック
-
-```
-lib/
-├── actions/               # Server Actions (エントリーポイント)
-│   ├── auth.ts            # 認証アクション
-│   ├── todos.ts           # TODOアクション
-│   └── diary.ts           # 日記アクション
-├── domain/                # ドメインモデル
-│   ├── auth.ts            # 認証ドメイン
-│   ├── todos/             # TODOドメイン
-│   ├── diary/             # 日記ドメイン
-│   └── storage/           # ストレージ設定
-├── usecases/              # ビジネスロジック
-│   ├── auth.ts
-│   ├── todos.ts
-│   └── diary.ts
-├── mutations/             # データ変更
-│   ├── todos.ts
-│   └── diaries.ts
-├── queries/               # データ取得
-│   ├── todos.ts
-│   └── diaries.ts
-├── services/              # 外部サービス連携
-│   ├── auth/              # Better Auth設定
-│   ├── email.ts           # メール送信
-│   └── image-upload.service.ts
-├── schemas/               # Zodバリデーション
-│   ├── auth.ts
-│   ├── todos.ts
-│   └── diary.ts
-├── storage/               # ストレージクライアント
-│   └── client.ts
-└── utils/                 # ユーティリティ
-    ├── error-translator.ts
-    ├── safe-action.ts
-    └── cache-tags.ts
-```
-
-### `src/db/` - データベース
-
-```
-db/
-├── schema/                # Drizzle ORMスキーマ
-│   ├── auth.ts            # Better Auth テーブル
-│   ├── todos.ts           # TODOテーブル
-│   └── diaries.ts         # 日記テーブル
-├── client.ts              # データベースクライアント
-├── seed.ts                # 開発用シードデータ
-└── setup-rls.ts           # 本番用RLS設定
-```
-
-### `test/` - テストユーティリティ
-
-```
-test/
-├── factories/             # テストデータファクトリー
-│   ├── todo.factory.ts
-│   └── diary.factory.ts
-├── helpers/               # テストヘルパー
-│   ├── db.ts              # DBセットアップ
-│   └── auth.ts            # 認証モック
-└── mocks/                 # モック実装
-    └── handlers.ts        # MSWハンドラー
-```
-
-## Code Organization Patterns
-
-### Container/Presentationalパターン
-
-各機能の`_containers/`ディレクトリに3ファイル構成：
-
-```
-_containers/
-└── feature-name/
-    ├── index.tsx          # エクスポート
-    ├── container.tsx      # データフェッチ（Server Component）
-    └── presentational.tsx # UI表示（Client Component）
-```
-
-### データフローパターン
-
-```
-1. actions/ (Server Action定義)
-   ↓
-2. usecases/ (ビジネスロジック)
-   ↓
-3. queries/mutations/ (データ操作)
-   ↓
-4. services/ (外部サービス)
-```
-
-## File Naming Conventions
-
-### ディレクトリ命名
-
-- **lowercase-with-dashes**: すべてのディレクトリ名
-- **グループ化**: `(group-name)/`でルートグループ
-- **プライベート**: `_components/`で内部コンポーネント
-
-### ファイル命名
-
-- **コンポーネント**: `component-name.tsx`
-- **テスト**: `*.test.ts(x)`, `*.integration.test.ts`
-- **スキーマ**: 単数形 `todo.ts`, `diary.ts`
-- **アクション**: 複数形 `todos.ts`, `diaries.ts`
-
-### 関数命名
-
-- **非同期DB操作**: `get*`, `create*`, `update*`, `delete*`
-- **純粋関数**: `convert*`, `calculate*`, `validate*`, `map*`
-- **Server Actions**: `*Action` (例: `createTodoAction`)
-
-## Import Organization
-
-### インポート順序
-
-1. **外部パッケージ**: React, Next.js, サードパーティ
-2. **内部エイリアス**: `@/lib/*`, `@/components/*`
-3. **相対インポート**: `./`, `../`
-4. **型定義**: `type`, `interface`のインポート
-
-### パスエイリアス
-
-- `@/*` → `./src/*`
-- 深いネストを避けるためにエイリアスを活用
-
-## Key Architectural Principles
-
-### 1. Server Components First
-
-- デフォルトでServer Componentを使用
-- `use client`は必要最小限に
-- データフェッチはServer Componentで実行
-
-### 2. 型安全性の確保
-
-- TypeScript strict mode
-- Zodによるランタイム検証
-- drizzle-zodによるDB型の自動生成
-
-### 3. エラーハンドリングの統一
-
-- Server Actionsでのエラーは自動キャッチ
-- エラーメッセージは日本語に自動翻訳
-- ユーザーフレンドリーなエラー表示
-
-### 4. キャッシュ戦略
-
-- タグベースのキャッシュ管理
-- 更新時の自動無効化
-- 効率的なデータ再取得
-
-### 5. テスタビリティ
-
-- 各レイヤーが独立してテスト可能
-- モックしやすい構造
-- 統合テストの容易性
-
-### 6. 保守性とスケーラビリティ
-
-- 明確な責務分離
-- 機能ごとのモジュール化
-- 一貫したコーディング規約
+## 補足
+- `.kiro/specs/` は機能ごとの仕様ディレクトリ。必要に応じて `/kiro:spec-init` で生成。
+- Steering 更新後は `/kiro:spec-status` で仕様との整合を確認し、乖離があれば該当 spec を更新する。
+- 新しいモジュールやレイヤーを追加した際は本ファイルに反映し、更新日を追記すること。

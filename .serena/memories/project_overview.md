@@ -1,56 +1,7 @@
-# Project Overview
-
-## Project Purpose
-A modern Next.js template project with comprehensive tech stack including authentication, database, and testing infrastructure. This is a Japanese language web application template designed for rapid development of modern web applications.
-
-## Tech Stack
-
-### Core Framework
-- **Next.js 15.3** with App Router
-- **React 19** with Server Components
-- **TypeScript** (strict mode)
-
-### Styling & UI
-- **Tailwind CSS v4** for styling
-- **Radix UI primitives** for accessibility
-- **shadcn/ui** component pattern
-- **Lucide React** for icons
-
-### Database & Backend
-- **Supabase Local** for development
-- **Drizzle ORM** for database schema management
-- **PostgreSQL** with connection pooling
-- **Better Auth** for authentication with email verification
-
-### Forms & Validation
-- **React Hook Form** for form management
-- **Zod** for schema validation
-- **next-safe-action v8** for server actions
-
-### State Management
-- **Zustand** for client-side state
-- **nuqs** for URL state management
-
-### Testing
-- **Vitest** for unit and integration testing
-- **React Testing Library** for component testing
-- **PGLite** for in-memory database testing
-- **@testing-library/user-event** for user interaction testing
-
-### Code Quality
-- **Biome** for linting and formatting
-- **Lefthook** for git hooks
-- **TypeScript** strict mode
-
-### Email & Communication
-- **React Email** for email templates
-- **Resend** as email provider
-
-### Monitoring & Analytics
-- **Sentry** for error tracking
-- **@t3-oss/env-nextjs** for environment variable validation
-
-### Development & Deployment
-- **pnpm** as package manager
-- **Vercel** for deployment
-- **GitHub Actions** for CI/CD
+# プロジェクト概要
+- Next.js 15.5.4 + React 19 をベースにした日本語向けモダンWebアプリのテンプレート。Better Auth によるメール認証、TODO/Diary 管理、MinIO/Cloudflare R2 連携をサンプル実装。
+- サーバーアクションは next-safe-action を利用し、`src/lib/actions → usecases → mutations/queries/services` のレイヤーでドメインロジックを整理。RSC コンポーネントを標準とし、必要部分のみ `use client`。
+- DB には PostgreSQL + Drizzle ORM、ローカルは MinIO、CI/CD は GitHub Actions + Vercel。品質は Biome・TypeScript・Vitest・Playwright・Sentry で担保。
+- ルーティングは App Router。`RootLayout` (src/app/layout.tsx) が NuqsAdapter/Toaster を内包し、`src/app/(auth)` が認証フロー、`src/app/(protected)/dashboard` がメインUI。UI は Tailwind CSS v4 + shadcn/ui コンポーネント。
+- 代表的シンボル: `createTodoAction` (src/lib/actions/todos.ts) が server action、`createTodoUsecase` (src/lib/usecases/todos.ts) がバリデーションと永続化を司る。その他ドメイン毎に usecase/action が対になっている。
+- 主要構成: `src/lib` にドメイン層、`src/components` にUI部品、`src/db/schema` に Drizzle スキーマ、`src/test` にテストユーティリティ、`e2e` に Playwright スイート。

@@ -1,44 +1,42 @@
-仕様書管理システムの初期設定
+Serenaの初期設定
 
 ---
-description: "仕様書ディレクトリ構造の作成と初期仕様書生成"
-allowed-tools: ["Bash", "Write", "Read", "mcp__serena__check_onboarding_performed", "mcp__serena__onboarding", "mcp__serena__list_memories", "mcp__serena__read_memory", "mcp__serena__find_symbol", "mcp__serena__list_dir"]
+
+description: "Serenaのオンボーディングとプロジェクト理解の初期化"
+allowed-tools: ["mcp__serena__check_onboarding_performed", "mcp__serena__onboarding", "mcp__serena__list_memories", "mcp__serena__write_memory", "mcp__serena__list_dir", "mcp__serena__find_symbol"]
+
 ---
 
 # init
 
-仕様書管理システムを初期化し、プロジェクトの現状から初期仕様書を生成します。
+Serenaを初期化し、プロジェクトの構造を理解してメモリに記録します。
 
 ## Instructions
 
-1. **Serenaの初期化**
-   - mcp__serena__check_onboarding_performed でオンボーディング状態を確認
-   - 未実行の場合は mcp__serena__onboarding を実行
-   - mcp__serena__list_memories で既存メモリを確認
+1. **Serenaのオンボーディング確認**
+   - mcp**serena**check_onboarding_performed でオンボーディング状態を確認
+   - 未実行の場合は mcp**serena**onboarding を実行
+   - mcp**serena**list_memories で既存メモリを確認
 
-2. **プロジェクト理解の更新**
-   - プロジェクト構造の分析と理解
-   - mcp__serena__write_memory でプロジェクト現状をメモリに記録
+2. **プロジェクト構造の分析**
+   - mcp**serena**list_dir でプロジェクト全体の構造を把握
+   - 主要なディレクトリとファイルの配置を理解
+   - src/lib/actions/, src/app/, src/db/schema/ などの重要ディレクトリを特定
 
-3. **.document/specs/ ディレクトリ構造を作成**
-   ```
-   .document/specs/
-   ├── overview.md      # 概要とインデックス
-   └── features/        # 機能別仕様書
-   ```
+3. **コードシンボルの収集**
+   - mcp**serena**find_symbol で主要なクラス、関数、定数を収集
+   - アプリケーションのエントリーポイントと主要コンポーネントを識別
+   - ルーティング構造とAPI構造を理解
 
-   - src/lib/actions/ のファイルを解析して機能名を抽出
-   - src/app/ のルート構造から画面構成を把握
-   - 各actionファイルの内容を分析して機能の詳細を理解
+4. **プロジェクト理解をメモリに記録**
+   - mcp**serena**write_memory で以下の情報を記録:
+     - プロジェクト概要と技術スタック
+     - ディレクトリ構造と命名規則
+     - 主要な機能とモジュール構成
+     - 検出したシンボルとその役割
+     - アーキテクチャパターンと設計指針
 
-   - actions/*.ts のファイル名から機能名を決定（例: auth.ts → auth.md）
-   - 各機能の実装内容を分析してテンプレートを作成
-   - app/ルート構造と対応させて画面仕様も含める
-
-   - プロジェクト概要
-   - 機能一覧とリンク
-   - 最終更新日時（ISO 8601形式）を記録
-
-7. **初期化完了メッセージを表示**
-   - 作成されたファイル一覧
+5. **初期化完了レポート**
+   - Serenaの初期化状態
+   - 記録されたメモリの概要
    - 次のステップ（/docs:sync の使い方）

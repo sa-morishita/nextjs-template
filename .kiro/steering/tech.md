@@ -1,150 +1,52 @@
-# Technology Stack
+# 技術スタックと開発環境
+最終更新: 2025-09-27
 
-## Architecture
+## アーキテクチャ概要
+- Next.js 15.5.4 (App Router) + React 19 をベースにしたサーバーコンポーネント優先構成。
+- ドメイン層は `actions → usecases → mutations/queries/services` の分離で、副作用はユースケースに集約。
+- 認証は Better Auth、データ永続化は PostgreSQL + Drizzle ORM、ストレージは MinIO/R2。
+- Spec Driven Development（Kiro ワークフロー）により、仕様→設計→タスク→実装を段階管理。
 
-### システム構成
+## フロントエンド
+- UI: Tailwind CSS v4 + shadcn/ui + Radix UI。
+- 状態管理: React Server Components でデータ取得、クライアント側は必要箇所のみ Zustand。
+- ルーティング: App Router。`(auth)` と `(protected)` でルートセグメントを分離。
+- ユーティリティ: Nuqs (URL state), React Hook Form + Zod + next-safe-action。
 
-- **フロントエンド**: Next.js 15.5 App Router (React 19)
-- **バックエンド**: Next.js API Routes + Server Actions
-- **データベース**: PostgreSQL + Drizzle ORM
-- **ストレージ**: MinIO (開発) / Supabase Storage (本番)
-- **認証**: Better Auth
-- **デプロイ**: Vercel
+## サーバー・バックエンド
+- Server Actions でフォーム送信・API 呼び出しを処理。`privateActionClient` を通じてコンテキスト（ユーザー情報等）を注入。
+- ビジネスロジックは `src/lib/usecases` 内でバリデーションとトランザクションを担当。
+- Drizzle ORM による型安全なクエリ。`src/db/schema` にスキーマ、`src/db/seed.ts` で初期データ投入。
 
-### アーキテクチャパターン
+## インフラ・ストレージ
+- ローカル: PostgreSQL 17 / MinIO（ポートはセットアップスクリプトがハッシュベースで割当）。
+- 本番: Neon (PostgreSQL) + Cloudflare R2。環境変数でエンドポイントや資格情報を指定。
+- 監視: Sentry（Next.js エッジ/サーバー両方で設定済み）。
 
-- **Server Components First**: React Server Componentsを優先使用
-- **Container/Presentational**: データフェッチとUIを分離
-- **Domain-Driven Design**: ドメインモデルによるビジネスロジックの整理
-- **Layered Architecture**: actions → usecases → mutations/queries → services
+## 開発フローと主要コマンド
+- 依存関係: `pnpm install --frozen-lockfile`
+- 型生成: `pnpm next typegen`
+- 品質: `pnpm biome check --write .`, `pnpm typecheck`, `pnpm check:all`
+- テスト: `pnpm test:unit`, `pnpm test:integration`, `pnpm test:storage`, `pnpm test:e2e`
+- DB: `pnpm db:migrate:dev`（既存 DB を破壊的に再生成しシード投入）, `pnpm db:studio`
+- 開発サーバー: `dev3000`（推奨）、`pnpm dev`
+- ストレージ: `/dev/setup-storage` コマンドで MinIO 起動とバケット初期化。
 
-## Frontend
+## 環境変数と設定ポイント
+- `.env.local` に MinIO／PostgreSQL／Better Auth／Resend 等の値を設定（セットアップスクリプトが初期投入）。
+- 代表例:
+  - `DATABASE_URL=postgresql://localhost:5432/<project>_main_dev`
+  - `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_CONSOLE_PORT`, `MINIO_DATA_DIR`
+  - `USE_R2`, `R2_*`（本番ストレージ）、`BETTER_AUTH_SECRET`, `RESEND_API_KEY`
+  - `NEXT_PUBLIC_SITE_URL`
+- GitHub Actions (`.github/workflows/ci.yml`) は Node 22.15.1 / pnpm 10 で lint・typecheck・unit・integration を実行。
 
-- **Framework**: Next.js 15.5 (App Router)
-- **UI Library**: React 19
-- **Styling**: Tailwind CSS v4
-- **UI Components**: Radix UI + shadcn/ui パターン
-- **Form Handling**: React Hook Form + Zod
-- **State Management**: Zustand (クライアントサイド状態)
-- **URL State**: nuqs (型安全なURL状態管理)
-- **Fonts**: Geist Sans/Mono (最適化済み)
+## 推奨ツール・MCP
+- Serena MCP: コードベース理解とメモリ管理。
+- Brave Search MCP / Context7 MCP / Playwright MCP / dev3000 MCP などがセットアップスクリプトで登録済み。
+- Kiro コマンド群 (`/kiro:spec-*`, `/kiro:steering*`) を通じて仕様管理を行う。
 
-## Backend
-
-- **Language**: TypeScript (strict mode)
-- **Runtime**: Node.js v22.15.1+
-- **Framework**: Next.js Server Actions + API Routes
-- **ORM**: Drizzle ORM
-- **Validation**: Zod スキーマ
-- **Server Actions**: next-safe-action v8
-- **Email**: Resend + React Email
-- **Error Handling**: 統一エラー変換システム
-
-## Development Environment
-
-### 必須ツール
-
-- **Package Manager**: pnpm v10.0.0+
-- **Database**: PostgreSQL 16+ (Homebrew推奨)
-- **Storage**: MinIO + MinIO Client (mc)
-- **Code Editor**: Claude Code (推奨)
-- **Process Manager**: dev3000 (デバッグ機能付き開発サーバー)
-
-### 開発ツール
-
-- **Code Quality**: Biome (フォーマット/リント)
-- **Type Checking**: TypeScript
-- **Git Hooks**: Lefthook
-- **Database GUI**: Drizzle Studio
-- **Testing**: Vitest + Playwright
-- **Error Monitoring**: Sentry
-
-## Common Commands
-
-```bash
-# 開発
-dev3000                    # デバッグ情報付き開発サーバー
-pnpm dev                   # turbopack高速開発サーバー
-pnpm build                 # プロダクションビルド
-
-# コード品質
-pnpm check                 # Biomeチェック（自動修正）
-pnpm typecheck             # TypeScript型チェック
-pnpm check:all             # すべてのチェック実行
-
-# データベース
-pnpm db:migrate:dev        # 開発環境マイグレーション（シード含む）
-pnpm db:migrate:prod       # 本番環境マイグレーション
-pnpm db:studio             # Drizzle Studio起動
-
-# テスト
-pnpm test:unit             # ユニットテスト
-pnpm test:integration      # 統合テスト
-pnpm test:storage          # ストレージテスト  
-pnpm test:e2e              # E2Eテスト
-pnpm test:all              # 全テスト実行
-
-# ストレージ（開発）
-/dev/setup-storage         # MinIOセットアップ（Claude Code）
-```
-
-## Environment Variables
-
-### 必須環境変数
-
-```bash
-# サイトURL
-NEXT_PUBLIC_SITE_URL="http://localhost:3000"  # 開発環境
-
-# データベース
-DATABASE_URL="postgresql://localhost:5432/[project]_main_dev"
-DRIZZLE_STUDIO_PORT=[dynamic]  # プロジェクト固有
-
-# ストレージ（開発）
-NEXT_PUBLIC_SUPABASE_URL="http://localhost:[port]"  # MinIO URL
-SUPABASE_SERVICE_ROLE_KEY="minioadmin"
-DEV_MINIO_PORT=[dynamic]         # プロジェクト固有
-DEV_MINIO_CONSOLE_PORT=[dynamic] # プロジェクト固有
-DEV_MINIO_DATA_DIR="./dev-minio-[uuid]"
-
-# 認証
-BETTER_AUTH_SECRET=[32バイトランダム文字列]
-
-# メール送信
-RESEND_API_KEY=[Resend APIキー]
-
-# ソーシャルログイン（オプション）
-LINE_LOGIN_CHANNEL_ID=[LINE Channel ID]
-LINE_LOGIN_CHANNEL_SECRET=[LINE Channel Secret]
-```
-
-### 本番環境変数
-
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL="https://[project].supabase.co"
-SUPABASE_SERVICE_ROLE_KEY=[Supabaseサービスロールキー]
-
-# データベース（Connection Pooler使用）
-DATABASE_URL="postgres://[user]:[pass]@[host]:6543/postgres"
-
-# エラー監視
-SENTRY_AUTH_TOKEN=[Sentryトークン]
-NEXT_PUBLIC_SENTRY_DSN=[Sentry DSN]
-```
-
-## Port Configuration
-
-### 開発環境ポート
-
-- **Next.js**: 3000 (デフォルト)
-- **MinIO API**: 動的割り当て (9000-9999)
-- **MinIO Console**: 動的割り当て (9100-9199)
-- **Drizzle Studio**: 動的割り当て (4983-5999)
-- **dev3000 MCP**: 動的割り当て (3684+)
-
-### ポート競合回避
-
-- セットアップスクリプトが自動的に利用可能なポートを検出
-- `.env.local`にプロジェクト固有のポート設定を保存
-- ワークツリーでの並行開発をサポート
+## 更新ガイド
+- 主要依存（Next.js, React, Better Auth, Drizzle 等）をアップグレードした場合はバージョンを更新。
+- 新しいビルド／テストコマンドを追加した際は "開発フローと主要コマンド" セクションに追記。
+- 環境変数が増減した場合は代表例を更新し、破壊的変更には注意書きを添える。

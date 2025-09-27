@@ -2,7 +2,7 @@
 
 ## 概要
 
-このテンプレートは、Next.js 15.5を基盤とした本格的なWebアプリケーション開発のためのスターターキットです。認証、データベース、テスト、CI/CDなど、プロダクション開発に必要なすべての機能が事前設定されています。
+このテンプレートは、Next.js 15.5.4を基盤とした本格的なWebアプリケーション開発のためのスターターキットです。認証、データベース、テスト、CI/CDなど、プロダクション開発に必要なすべての機能が事前設定されています。
 
 ### 主な機能
 
@@ -14,7 +14,7 @@
 
 ## 技術スタック
 
-- **Framework**: Next.js 15.5 (App Router) + React 19
+- **Framework**: Next.js 15.5.4 (App Router) + React 19
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS v4 + shadcn/ui
 - **Database**: PostgreSQL (ローカル) / Neon (本番) + Drizzle ORM
@@ -29,8 +29,8 @@
 ### 前提条件
 
 - Node.js v22.15.1以上
-- pnpm v9.0.0以上
-- PostgreSQL 16以上
+- pnpm v10.0.0以上
+- PostgreSQL 17以上
 - MinIO (ローカルストレージ)
 - MinIO Client (mc)
 - [Claude Code](https://code.claude.ai/) (推奨)
@@ -55,7 +55,7 @@ pnpm install
 # 3. Git hooks（Lefthook）のセットアップ
 pnpm lefthook install
 
-# 4. データベースのマイグレーション
+# 4. データベースの再生成とマイグレーション（破壊的）
 pnpm db:migrate:dev
 ```
 
@@ -130,7 +130,7 @@ pnpm typecheck             # 型チェック
 pnpm check:all             # すべてのチェック
 
 # データベース
-pnpm db:migrate:dev        # データベースのマイグレーション
+pnpm db:migrate:dev        # データベースを再生成してマイグレーション＆シード (破壊的)
 pnpm db:studio             # Drizzle Studio起動（DB管理UI）
 
 # テスト
@@ -187,10 +187,10 @@ e2e/                       # E2Eテスト (Playwright)
 
 #### **`ci.yml`** - メインCI
 
+- 🔄 **Next.js Typegen**: `pnpm next typegen` で型を同期
 - 🔍 **Lint & Type Check**: Biome + TypeScript
-- 🧪 **Unit Tests**: Vitest単体テスト
-- 🔗 **Integration Tests**: PGLite統合テスト
-- 🏗️ **Build**: Next.js本番ビルド
+- 🧪 **Unit Tests**: Vitest単体テスト（カバレッジ収集 & Codecov 送信）
+- 🔗 **Integration Tests**: PGLite統合テスト（ダミー環境変数で実行）
 
 #### **`e2e.yml`** - E2Eテスト
 

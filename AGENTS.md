@@ -15,15 +15,9 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 **Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
 **Specs** (`.kiro/specs/`) - Formalize development process for individual features
 
-### Active Specifications
-
-- **cloudflare-r2-migration** — Cloudflare R2リモートストレージ移行計画（initialized 2025-09-27）
-- Check `.kiro/specs/` for active specifications
-- Use `/kiro:spec-status [feature-name]` to check progress
-
 ## Development Guidelines
 
-- Think in English, but generate responses in Japanese (思考は英語、回答の生成は日本語で行うように)
+- Think in English, but generate responses in Japanese
 
 ## Workflow
 
@@ -99,7 +93,7 @@ This file provides guidance when working with code in this repository.
 
 ### Initial Setup
 
-- **PostgreSQL**: Install via Homebrew (`brew install postgresql@16`)
+- **PostgreSQL**: Install via Homebrew (`brew install postgresql@17`)
 - **MinIO**: Install via Homebrew (`brew install minio`)
 - **Auto Setup**: Run `.document/scripts/setup-development-environment.sh`
   - Creates PostgreSQL database automatically
@@ -127,7 +121,7 @@ This file provides guidance when working with code in this repository.
 
 ### Database Commands
 
-- `pnpm db:migrate:dev` - Apply database migrations in development environment
+- `pnpm db:migrate:dev` - Drop existing schema, regenerate migrations, apply them, and seed development data
 
 **IMPORTANT**: Never execute database schema changes or migrations automatically. Always ask for user confirmation before running commands.
 
@@ -152,7 +146,7 @@ When using dev3000 for development monitoring:
 
 ### Tech Stack & Configuration
 
-- **Framework**: Next.js 15.3 with App Router, React 19 Server Components first
+- **Framework**: Next.js 15.5.4 with App Router, React 19 Server Components first
 - **Language**: TypeScript strict mode, path alias `@/*` → `./src/*`
 - **Styling**: Tailwind CSS v4
 - **UI**: Radix UI primitives with shadcn/ui pattern
@@ -188,7 +182,7 @@ When using dev3000 for development monitoring:
   - `storage/` - Unified storage interface (MinIO for dev, R2 for prod)
   - `usecases/` - Application business logic
   - `utils/` - Utility functions and helpers
-- `test/` - Test utilities and helpers (Vitest)
+- `src/test/` - Test utilities and helpers (Vitest)
 - `e2e/` - E2E tests with Playwright
   - `specs/` - Test specifications
   - `global-setup.ts` - Global test setup
