@@ -56,25 +56,3 @@ jobs:
           # 生成されたマイグレーションファイルを確認
           echo "Generated migration files:"
           ls -la drizzle/ || echo "No drizzle directory found"
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Push storage configuration
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          echo "Linking to Supabase project..."
-          supabase link --project-ref $SUPABASE_PROJECT_ID
-
-          echo "Pushing storage configuration..."
-          supabase config push --yes
-
-          echo "Seeding storage buckets..."
-          # ベータ版のCLIを使用してバケットをシード
-          # 注意: 既存のバケットがある場合は対話的プロンプトが出るが、GitHub Actionsでは自動的にタイムアウトする
-          npx supabase@beta seed buckets --linked || echo "Bucket seeding completed (may have timed out on prompt)"

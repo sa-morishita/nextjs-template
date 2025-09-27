@@ -44,8 +44,7 @@ jobs:
           # ダミー環境変数（E2Eテスト用）
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           BETTER_AUTH_SECRET: "dummy-secret-for-e2e-tests"
-          SUPABASE_SERVICE_ROLE_KEY: "dummy-key"
-          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+          USE_R2: "false"
           NEXT_PUBLIC_SITE_URL: "https://example.com"
           RESEND_API_KEY: "dummy-resend-api-key"
           LINE_LOGIN_CHANNEL_ID: "dummy-line-login-channel-id"

@@ -22,7 +22,7 @@
     "test:all": "pnpm run test:unit && pnpm run test:integration && pnpm run test:storage && pnpm run test:e2e",
     "test:coverage": "vitest run --coverage",
     "db:migrate:dev": "drizzle-kit drop && drizzle-kit generate && drizzle-kit migrate && tsx src/db/seed.ts",
-    "db:migrate:prod": "drizzle-kit generate && drizzle-kit migrate && tsx src/db/setup-rls.ts",
+    "db:migrate:prod": "drizzle-kit generate && drizzle-kit migrate",
     "db:studio": "source .env.local && drizzle-kit studio --port $DRIZZLE_STUDIO_PORT",
     "audit": "pnpm audit --audit-level=high"
   },
