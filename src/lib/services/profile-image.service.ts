@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 import { storage } from '@/lib/storage/client';
+import { logger } from '@/lib/utils/logger';
 
 interface UploadProfileImageResult {
   url: string | null;
@@ -112,7 +113,7 @@ export async function deleteOldProfileImages(userId: string): Promise<void> {
       .slice(1)
       .map((file) => `${userId}/${file.name}`);
 
-    console.log(
+    logger.info(
       `Deleting ${filesToDelete.length} old profile images for user ${userId}`,
     );
 
@@ -121,7 +122,7 @@ export async function deleteOldProfileImages(userId: string): Promise<void> {
     if (deleteError) {
       console.error('Failed to delete old profile images:', deleteError);
     } else {
-      console.log(`Successfully deleted old profile images for user ${userId}`);
+      logger.info(`Successfully deleted old profile images for user ${userId}`);
     }
   } catch (error) {
     console.error('Error in deleteOldProfileImages:', error);

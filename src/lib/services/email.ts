@@ -6,6 +6,7 @@ import {
   EmailVerificationTemplate,
   PasswordResetTemplate,
 } from '@/lib/utils/email-templates/auth';
+import { logger } from '@/lib/utils/logger';
 
 export const resend = new Resend(env.RESEND_API_KEY);
 
@@ -16,7 +17,7 @@ export async function sendVerificationEmailWithReact(params: {
   companyName?: string;
 }) {
   try {
-    console.log('📧 Sending React Email verification to:', params.to);
+    logger.info('📧 Sending React Email verification to:', params.to);
 
     const html = await render(
       EmailVerificationTemplate({
@@ -43,7 +44,7 @@ export async function sendVerificationEmailWithReact(params: {
       text,
     });
 
-    console.log('📧 Resend API response:', {
+    logger.info('📧 Resend API response:', {
       id: result.data?.id,
       error: result.error,
       data: result.data,
@@ -61,7 +62,7 @@ export async function sendVerificationEmailWithReact(params: {
       throw new Error('メールの送信に失敗しました（IDが返されませんでした）');
     }
 
-    console.log(
+    logger.info(
       '📧 React Email verification sent successfully:',
       result.data.id,
     );
@@ -79,7 +80,7 @@ export async function sendPasswordResetEmailWithReact(params: {
   companyName?: string;
 }) {
   try {
-    console.log('📧 Sending React Email password reset to:', params.to);
+    logger.info('📧 Sending React Email password reset to:', params.to);
 
     const html = await render(
       PasswordResetTemplate({
@@ -106,7 +107,7 @@ export async function sendPasswordResetEmailWithReact(params: {
       text,
     });
 
-    console.log('📧 Resend API response:', {
+    logger.info('📧 Resend API response:', {
       id: result.data?.id,
       error: result.error,
       data: result.data,
@@ -124,7 +125,7 @@ export async function sendPasswordResetEmailWithReact(params: {
       throw new Error('メールの送信に失敗しました（IDが返されませんでした）');
     }
 
-    console.log(
+    logger.info(
       '📧 React Email password reset sent successfully:',
       result.data.id,
     );

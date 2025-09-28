@@ -12,6 +12,7 @@ import {
   sendVerificationEmailWithReact,
 } from '@/lib/services/email';
 import { uploadProfileImageFromUrl } from '@/lib/services/profile-image.service';
+import { logger } from '@/lib/utils/logger';
 
 // LINE OAuthプロファイルの型定義
 interface LineProfile {
@@ -75,9 +76,9 @@ export const auth = betterAuth({
               .update(user)
               .set({ lastLoginAt: new Date() })
               .where(eq(user.id, session.userId));
-            console.log('✅ lastLoginAt更新完了:', session.userId);
+            logger.info('✅ lastLoginAt更新完了:', session.userId);
           } catch (error) {
-            console.error('❌ lastLoginAt更新エラー:', error);
+            logger.error('❌ lastLoginAt更新エラー:', error);
             // エラーが発生してもログイン処理は続行
             Sentry.captureException(error, {
               tags: {
@@ -95,7 +96,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (createdUser) => {
-          console.log('🔥 ユーザー作成フック実行:', {
+          logger.info('🔥 ユーザー作成フック実行:', {
             userId: createdUser.id,
             name: createdUser.name,
             email: createdUser.email,
@@ -104,7 +105,7 @@ export const auth = betterAuth({
           try {
             // 画像URLが存在する場合、永続化処理を実行
             if (createdUser.image?.includes('profile.line-scdn.net')) {
-              console.log(
+              logger.info(
                 '🖼️ LINEプロフィール画像を永続化します:',
                 createdUser.image,
               );
@@ -114,7 +115,7 @@ export const auth = betterAuth({
               );
 
               if (uploadResult.url) {
-                console.log('✅ 画像の永続化に成功しました:', uploadResult.url);
+                logger.info('✅ 画像の永続化に成功しました:', uploadResult.url);
 
                 // userテーブルのimageカラムも更新
                 await db
@@ -122,7 +123,7 @@ export const auth = betterAuth({
                   .set({ image: uploadResult.url })
                   .where(eq(user.id, createdUser.id));
               } else {
-                console.warn(
+                logger.warn(
                   '⚠️ 画像の永続化に失敗しました:',
                   uploadResult.error,
                 );
@@ -145,7 +146,7 @@ export const auth = betterAuth({
               }
             }
           } catch (error) {
-            console.error(
+            logger.error(
               '❌ プロフィール画像処理中にエラーが発生しました:',
               error,
             );
@@ -172,8 +173,8 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true, // メール認証を必須に
     sendResetPassword: async ({ user, url }) => {
-      console.log('🔑 Password reset requested for:', user.email);
-      console.log('🔑 Password reset URL:', url);
+      logger.info('🔑 Password reset requested for:', user.email);
+      logger.info('🔑 Password reset URL:', url);
 
       try {
         await sendPasswordResetEmailWithReact({
@@ -183,15 +184,15 @@ export const auth = betterAuth({
           companyName: 'TODO App',
         });
 
-        console.log('🔑 Password reset email sent successfully');
+        logger.info('🔑 Password reset email sent successfully');
       } catch (error) {
-        console.error('🔑 Failed to send password reset email:', error);
+        logger.error('🔑 Failed to send password reset email:', error);
         throw new Error('パスワードリセットメールの送信に失敗しました');
       }
     },
     // パスワードリセット後のコールバック
     onPasswordReset: async ({ user }) => {
-      console.log('🔑 Password successfully reset for user:', user.email);
+      logger.info('🔑 Password successfully reset for user:', user.email);
       // 必要に応じて追加のログ記録やセッション無効化を実装
     },
     // トークンの有効期限（1時間 = 3600秒）-
@@ -208,8 +209,8 @@ export const auth = betterAuth({
     verificationTokenExpiresIn: 60 * 60 * 24, // 24時間
     // React Email テンプレートを使用したカスタムメール送信関数
     sendVerificationEmail: async ({ user, url }, _request) => {
-      console.log('📧 Sending React Email verification to:', user.email);
-      console.log('📧 Verification URL:', url);
+      logger.info('📧 Sending React Email verification to:', user.email);
+      logger.info('📧 Verification URL:', url);
 
       try {
         await sendVerificationEmailWithReact({
@@ -219,9 +220,9 @@ export const auth = betterAuth({
           companyName: 'TODO App',
         });
 
-        console.log('📧 React Email verification sent successfully');
+        logger.info('📧 React Email verification sent successfully');
       } catch (error) {
-        console.error('📧 Failed to send React Email verification:', error);
+        logger.error('📧 Failed to send React Email verification:', error);
         throw new Error('認証メールの送信に失敗しました');
       }
     },
@@ -262,7 +263,7 @@ export const auth = betterAuth({
                 responseType: 'code',
                 pkce: true, // PKCE有効
                 mapProfileToUser: async (profile: Record<string, unknown>) => {
-                  console.log('📱 LINE profile:', profile);
+                  logger.info('📱 LINE profile:', profile);
                   // プロファイルを型安全にキャスト
                   const lineProfile = profile as unknown as LineProfile;
                   return {

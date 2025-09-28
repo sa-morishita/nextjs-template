@@ -1,4 +1,5 @@
 import type { Diary } from '@/db/schema';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * 日記フィルターのドメインモデル
@@ -39,7 +40,7 @@ export class DiaryAccessDeniedError extends Error {
   constructor(diaryId: string, userId: string, ownerId: string) {
     super('この日記にアクセスする権限がありません');
     this.name = 'DiaryAccessDeniedError';
-    console.log(
+    logger.warn(
       `Forbidden access: User ${userId} tried to access diary ${diaryId} owned by ${ownerId}`,
     );
   }

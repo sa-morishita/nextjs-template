@@ -1,4 +1,5 @@
 import type { Todo } from '@/db/schema';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * TODO統計情報のドメインモデル
@@ -66,7 +67,7 @@ export class TodoAccessDeniedError extends Error {
   constructor(todoId: string, userId: string, ownerId: string) {
     super('このTODOにアクセスする権限がありません');
     this.name = 'TodoAccessDeniedError';
-    console.log(
+    logger.warn(
       `Forbidden access: User ${userId} tried to access TODO ${todoId} owned by ${ownerId}`,
     );
   }

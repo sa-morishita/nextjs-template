@@ -2,6 +2,7 @@
  * 画像アップロード関連のサービス
  */
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 import {
   type PrefixName,
   validateFile,
@@ -53,9 +54,9 @@ export async function generateUploadUrl(
   const timestamp = Date.now();
   const folderName = `${input.userId}`;
 
-  // ユニークファイル名生成（タイムスタンプ + ランダム）
+  // ユニークファイル名生成（タイムスタンプ + UUID）
   const fileExtension = input.fileName.split('.').pop() || 'jpg';
-  const uniqueFileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+  const uniqueFileName = `${timestamp}-${randomUUID()}.${fileExtension}`;
   const filePath = `${folderName}/${uniqueFileName}`;
 
   // プレフィックスに応じたストレージクライアントを選択
