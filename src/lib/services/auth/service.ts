@@ -2,26 +2,11 @@ import 'server-only';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './config';
-
-function isErrorWithMessage(error: unknown): error is { message: string } {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof (error as Record<string, unknown>).message === 'string'
-  );
-}
-
-function isBetterAuthError(error: unknown): error is {
-  message: string;
-  status?: string;
-  statusCode?: number;
-  body?: unknown;
-} {
-  return (
-    isErrorWithMessage(error) && typeof error === 'object' && error !== null
-  );
-}
+import {
+  isBetterAuthError,
+  logAuthError,
+  translateBetterAuthError,
+} from './error-translator';
 
 export interface SignInData {
   email: string;
@@ -47,69 +32,40 @@ export async function signInWithEmail(data: SignInData) {
 
     return result;
   } catch (error: unknown) {
+    logAuthError('sign-in', error);
+
     if (isBetterAuthError(error)) {
-      console.error('🔐 Sign in error details:', {
-        message: error.message,
-        status: error.status,
-        statusCode: error.statusCode,
-        body: error.body,
+      translateBetterAuthError(error, {
+        defaultMessage:
+          'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
+        rules: [
+          {
+            match: ({ message, error: authError }) =>
+              (authError.status === 'FORBIDDEN' ||
+                authError.statusCode === 403) &&
+              message.toLowerCase().includes('email not verified'),
+            translatedMessage:
+              'メールアドレスが認証されていません。受信したメールから認証を完了してください。',
+          },
+          {
+            match: ({ message }) =>
+              message.toLowerCase().includes('invalid credentials'),
+            translatedMessage:
+              'メールアドレスまたはパスワードが正しくありません。',
+          },
+          {
+            match: ({ message }) =>
+              message.toLowerCase().includes('user not found'),
+            translatedMessage:
+              'このメールアドレスで登録されたアカウントが見つかりません。',
+          },
+        ],
       });
-    } else {
-      console.error('🔐 Sign in error:', error);
     }
 
-    if (isBetterAuthError(error)) {
-      if (error.status === 'FORBIDDEN' || error.statusCode === 403) {
-        if (
-          error.message?.includes('Email not verified') ||
-          (typeof error.body === 'object' &&
-            error.body !== null &&
-            'message' in error.body &&
-            typeof (error.body as { message: unknown }).message === 'string' &&
-            (error.body as { message: string }).message.includes(
-              'Email not verified',
-            ))
-        ) {
-          throw new Error(
-            'メールアドレスが認証されていません。受信したメールから認証を完了してください。',
-          );
-        }
-      }
-    }
-
-    if (isBetterAuthError(error)) {
-      const bodyMessage =
-        typeof error.body === 'object' &&
-        error.body !== null &&
-        'message' in error.body &&
-        typeof (error.body as { message: unknown }).message === 'string'
-          ? (error.body as { message: string }).message
-          : '';
-
-      if (
-        error.message?.includes('Invalid credentials') ||
-        bodyMessage.includes('Invalid credentials')
-      ) {
-        throw new Error('メールアドレスまたはパスワードが正しくありません。');
-      }
-
-      if (
-        error.message?.includes('User not found') ||
-        bodyMessage.includes('User not found')
-      ) {
-        throw new Error(
-          'このメールアドレスで登録されたアカウントが見つかりません。',
-        );
-      }
-
-      throw new Error(
-        'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
-      );
-    } else {
-      throw new Error(
-        'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
-      );
-    }
+    throw new Error(
+      'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
+    );
   }
 }
 
@@ -192,7 +148,7 @@ export async function requestPasswordReset(data: { email: string }) {
 
     return result ? { success: true } : { success: false };
   } catch (error: unknown) {
-    console.error('🔑 Password reset request error:', error);
+    logAuthError('password-reset-request', error);
     return { success: true };
   }
 }
@@ -216,32 +172,28 @@ export async function resetPassword(data: {
 
     return result;
   } catch (error: unknown) {
+    logAuthError('password-reset', error);
+
     if (isBetterAuthError(error)) {
-      console.error('🔑 Password reset execution error:', {
-        message: error.message,
-        status: error.status,
-        statusCode: error.statusCode,
+      translateBetterAuthError(error, {
+        defaultMessage:
+          'パスワードのリセットに失敗しました。リセットリンクを確認してください。',
+        rules: [
+          {
+            match: ({ message, error: authError }) =>
+              (authError.status === 'BAD_REQUEST' ||
+                authError.statusCode === 400) &&
+              (message.toLowerCase().includes('expired') ||
+                message.toLowerCase().includes('invalid')),
+            translatedMessage:
+              'リセットリンクの有効期限が切れているか、無効です。新しいリセットリンクを要求してください。',
+          },
+        ],
       });
-
-      if (error.status === 'BAD_REQUEST' || error.statusCode === 400) {
-        if (
-          error.message?.includes('expired') ||
-          error.message?.includes('invalid')
-        ) {
-          throw new Error(
-            'リセットリンクの有効期限が切れているか、無効です。新しいリセットリンクを要求してください。',
-          );
-        }
-      }
-
-      throw new Error(
-        'パスワードのリセットに失敗しました。リセットリンクを確認してください。',
-      );
-    } else {
-      console.error('🔑 Password reset execution error:', error);
-      throw new Error(
-        'パスワードのリセットに失敗しました。リセットリンクを確認してください。',
-      );
     }
+
+    throw new Error(
+      'パスワードのリセットに失敗しました。リセットリンクを確認してください。',
+    );
   }
 }

@@ -29,7 +29,11 @@ import {
   getSignedUploadUrlAction,
 } from '@/lib/actions/diary';
 import { DIARY_MESSAGES } from '@/lib/domain/diary';
-import { UPLOAD_MESSAGES } from '@/lib/domain/upload';
+import {
+  isAllowedImageType,
+  isValidFileSize,
+  UPLOAD_MESSAGES,
+} from '@/lib/domain/upload';
 import { createDiaryFormSchema } from '@/lib/schemas';
 import { uploadFileWithSignedUrl } from '@/lib/services/image-upload-client.service';
 import { generateClientBlurDataURL } from '@/lib/utils/blur-generator';
@@ -123,6 +127,24 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!isAllowedImageType(file.type)) {
+      toast.error(
+        `${UPLOAD_MESSAGES.INVALID_FILE_TYPE}（${UPLOAD_MESSAGES.SUPPORTED_FORMATS}）`,
+      );
+      e.target.value = '';
+      return;
+    }
+
+    if (!isValidFileSize(file.size)) {
+      const errorMessage =
+        file.size === 0
+          ? UPLOAD_MESSAGES.FILE_TOO_SMALL
+          : UPLOAD_MESSAGES.FILE_TOO_LARGE;
+      toast.error(errorMessage);
+      e.target.value = '';
+      return;
+    }
 
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
