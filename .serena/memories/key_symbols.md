@@ -1,0 +1,12 @@
+# 主要シンボル
+- `src/app/layout.tsx: RootLayout`: アプリ全体の HTML 構造・メタ設定を定義。
+- `src/app/(protected)/dashboard/(home)/page.tsx: DashboardPage`: 認証済みユーザーのダッシュボード表示入口。`searchParams` を Promise 形式で処理。
+- `src/app/(protected)/dashboard/layout.tsx: ProtectedLayout`: 認証ガードとして子要素を囲む Server Component。
+- `src/app/api/auth/[...all]/route.ts: handlers`: Better Auth のハンドラをエクスポートし Edge/Server 双方に対応。
+- `src/lib/actions/todos.ts: createTodoAction` ほか `updateTodoAction` 等: next-safe-action エントリーポイント。`actionName` メタを付与しユースケースをラップ。
+- `src/lib/usecases/todos.ts: createTodoUsecase`: バリデーションと重複チェックを含むビジネスロジック。`getTodosByUserId`, `getTodoById` などのクエリと協調。
+- `src/lib/queries/todos.ts`: `getTodosByUserId`, `getTodoById`, `getPendingTodoCount` など unstable_cache を使うデータ取得関数。タグ (`todos-user-${userId}` など) でキャッシュ制御。
+- `src/lib/mutations/todos.ts: createTodo / updateTodo`: Drizzle ORM を用いた書き込み。更新時は `updatedTodo` を返す。
+- `src/lib/services/auth/service.ts`: `signInWithEmail`, `signUpWithEmail`, `signOut`, `getSession` 等 Better Auth クライアント操作をラップ。
+- `src/lib/utils/logger.ts: logger`: `info`, `warn`, `error` メソッドを持つ共通ロガー。環境変数に応じて出力制御。
+- `src/db/schema/todos.ts: todos`: Todo テーブル定義。`pgTable` のコールバックでインデックスや更新日時トリガーを設定。

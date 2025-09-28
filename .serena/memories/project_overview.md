@@ -1,7 +1,7 @@
 # プロジェクト概要
-- Next.js 15.5.4 + React 19 をベースにした日本語向けモダンWebアプリのテンプレート。Better Auth によるメール認証、TODO/Diary 管理、MinIO/Cloudflare R2 連携をサンプル実装。
-- サーバーアクションは next-safe-action を利用し、`src/lib/actions → usecases → mutations/queries/services` のレイヤーでドメインロジックを整理。RSC コンポーネントを標準とし、必要部分のみ `use client`。
-- DB には PostgreSQL + Drizzle ORM、ローカルは MinIO、CI/CD は GitHub Actions + Vercel。品質は Biome・TypeScript・Vitest・Playwright・Sentry で担保。
-- ルーティングは App Router。`RootLayout` (src/app/layout.tsx) が NuqsAdapter/Toaster を内包し、`src/app/(auth)` が認証フロー、`src/app/(protected)/dashboard` がメインUI。UI は Tailwind CSS v4 + shadcn/ui コンポーネント。
-- 代表的シンボル: `createTodoAction` (src/lib/actions/todos.ts) が server action、`createTodoUsecase` (src/lib/usecases/todos.ts) がバリデーションと永続化を司る。その他ドメイン毎に usecase/action が対になっている。
-- 主要構成: `src/lib` にドメイン層、`src/components` にUI部品、`src/db/schema` に Drizzle スキーマ、`src/test` にテストユーティリティ、`e2e` に Playwright スイート。
+- Next.js 15 App Router を軸にした SaaS テンプレート。認証フロー、ダッシュボード、Todo/日記などのベース機能が実装済み。
+- プロダクト目標: Better Auth 連携の認証、MinIO/R2 を使うストレージ、Drizzle ORM による Postgres データ層を提供し、追加機能実装の土台を作る。
+- 主な技術スタック: TypeScript + React 19、Tailwind CSS v4、Radix UI/shadcn ui、Drizzle ORM、Better Auth、MinIO (dev)/Cloudflare R2 (prod)、Vitest/Playwright、Biome、nuqs、next-safe-action v8。
+- 実行フロー: app ディレクトリは RSC ベース。`src/lib` にユースケース・クエリ・ミューテーション・サービスを分離し、`src/lib/actions` の next-safe-action が UI とユースケースを仲介する。
+- ストレージ構成: 開発は MinIO、`MINIO_*` 環境変数で設定。本番は R2 を想定。`src/lib/storage` 配下に抽象化がある。
+- 監視・トレーシング: Sentry (edge/server) と dev3000 ログ監視。サーバー側ログは `@/lib/utils/logger` 経由で出力する必要がある。

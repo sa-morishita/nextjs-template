@@ -1,27 +1,32 @@
-# プロダクト概要
-最終更新: 2025-09-27
+# Product Overview
 
-## プロダクトビジョン
-- 日本語話者のチームがモダンな Next.js アプリを素早く立ち上げるためのテンプレート。
-- 認証・ダッシュボード・ストレージ連携・CI/CD など本番運用を意識した構成をサンプルとして提供。
-- Kiro スタイルの Spec Driven Development を前提とし、AI と人間の協調開発を支援。
+## Summary
+Next.js Template is a production-ready SaaS starter that bundles authentication, content management (todo & diary samples), storage integration, and observability to accelerate shipping new features on top of a modern React 19 App Router stack.
 
-## コア機能
-- Better Auth を利用したメールアドレス基盤のサインアップ / ログイン / パスワードリセット。
-- TODO / Diary の CRUD 機能と、Container/Presentational パターンによるダッシュボード UI。
-- MinIO（開発）/ Cloudflare R2（本番）によるオブジェクトストレージ統合。
-- GitHub Actions + Vercel による継続的デリバリー、Sentry によるモニタリング。
+## Core Features
+- Better Auth powered email authentication: sign-up, login, password reset, email verification.
+- Task and diary sample flows demonstrating CRUD with Drizzle ORM and caching via `unstable_cache`.
+- Unified file storage abstraction backing MinIO in development and Cloudflare R2 in production.
+- Tailwind CSS v4 + shadcn/ui based component library with Radix primitives.
+- Automated quality gates: Biome linting/formatting, TypeScript type checking, Vitest + Playwright test suites, GitHub Actions pipelines.
+- Observability hooks: Sentry (edge & server) instrumentation and dev3000 log stream tied to the shared logger utility.
 
-## 想定ユースケース
-- 新規サービスのプロトタイプや PoC を素早く構築し、後から機能拡張する。
-- 既存チームが Next.js 15.x + React 19 のベストプラクティスを参照しながらアプリを立ち上げる。
-- AI アシスタントと共同で要件→設計→タスクを進める際のリファレンスとして活用。
+## Target Use Cases
+- Teams bootstrapping a Japanese-language SaaS dashboard that requires secure account management out of the box.
+- Projects that need a reference implementation for Drizzle-based domain layering (actions → usecases → queries/mutations/services).
+- Developers experimenting with Next.js 15 server component patterns and modern tooling without rebuilding infrastructure.
 
-## 価値提案
-- 日本語で整備された開発ガイドとエラーメッセージにより国内チームのオンボーディング負荷を軽減。
-- Strict TypeScript とドメイン分割済みのコード構造でスケールしやすい。
-- CI／テスト／ストレージ／認証が揃っており、本番運用を見据えた品質要件を最初から満たせる。
+## Value Proposition
+- Opinionated yet extensible architecture that enforces clear layering and naming conventions.
+- Local developer experience scripts (`setup-development-environment`, dev3000) reduce manual configuration for PostgreSQL/MinIO.
+- Ready-to-run CI/CD pipelines ensure consistency between local, preview, and production deployments.
+- Built-in logging discipline through `@/lib/utils/logger` keeps environments aligned with observability requirements.
 
-## 今後の方向性メモ
-- 新しい機能を追加する場合は `.kiro/specs/` に仕様を追加し、Spec Driven Development フローを踏む。
-- ビジネス要件が変化した場合は本ファイルのユースケース・価値提案を更新し、変更日を明記する。
+## Roadmap Signals
+- Extend sample domains beyond todo/diary to showcase multi-tenant patterns.
+- Harden storage service for large file uploads and R2 replication configuration.
+- Expand error translation catalog for Japanese UX consistency across flows.
+
+## Stakeholder Notes
+- Product documentation and steering are considered Always Included to guide spec-driven workflows.
+- Coordinate with Claude Code spec phases before implementing major features to maintain architectural integrity.

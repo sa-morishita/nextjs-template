@@ -18,6 +18,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 ## Development Guidelines
 
 - Think in English, but generate responses in Japanese
+- サーバーサイドの診断ログはすべて `@/lib/utils/logger` を使用する（`logger.info`/`warn` は開発環境のみ出力、本番では `logger.error` のみ出力）
 
 ## Workflow
 

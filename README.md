@@ -116,6 +116,12 @@ LINE_LOGIN_CHANNEL_SECRET=<LINE Developersから取得>
 3. **ルーティング**: `src/app/`でページを配置
 4. **テスト**: `*.test.ts(x)`でテストを記述
 
+### ロギング方針
+
+- すべての診断ログは `src/lib/utils/logger.ts` に定義された `logger` を経由して出力します。
+- `logger.info` / `logger.warn` は開発環境でのみ標準出力され、本番ビルドでは自動的に抑制されます。
+- `logger.error` は環境に関わらず出力されるため、サーバーサイドの例外や致命的な状況に使用してください。
+
 ### 主要コマンド
 
 ```bash
