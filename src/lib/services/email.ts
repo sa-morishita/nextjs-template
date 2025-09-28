@@ -7,17 +7,8 @@ import {
   PasswordResetTemplate,
 } from '@/lib/utils/email-templates/auth';
 
-/**
- * Resend メールプロバイダー
- *
- * Better Auth のメール認証機能で使用
- * 本番環境とテスト環境で適切に動作するよう設定
- */
 export const resend = new Resend(env.RESEND_API_KEY);
 
-/**
- * React Email テンプレートを使用したメール認証送信
- */
 export async function sendVerificationEmailWithReact(params: {
   to: string;
   userName?: string;
@@ -81,9 +72,6 @@ export async function sendVerificationEmailWithReact(params: {
   }
 }
 
-/**
- * React Email テンプレートを使用したパスワードリセット送信
- */
 export async function sendPasswordResetEmailWithReact(params: {
   to: string;
   userName?: string;

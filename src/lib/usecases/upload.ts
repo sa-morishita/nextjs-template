@@ -1,6 +1,3 @@
-/**
- * アップロード関連のUsecases
- */
 import 'server-only';
 import { returnValidationErrors } from 'next-safe-action';
 import type { z } from 'zod';
@@ -12,16 +9,10 @@ import {
 import { getSignedUploadUrlSchema } from '@/lib/schemas/upload';
 import { generateUploadUrl } from '@/lib/services/image-upload.service';
 
-/**
- * Usecase Context
- */
 interface UsecaseContext {
   userId: string;
 }
 
-/**
- * アップロードURLパラメータの入力型
- */
 export type GenerateUploadUrlInput = z.infer<typeof getSignedUploadUrlSchema>;
 
 interface UploadUrlResult {
@@ -32,9 +23,6 @@ interface UploadUrlResult {
   path: string;
 }
 
-/**
- * 日記画像アップロード用のPresigned URLを生成
- */
 export async function generateDiaryImageUploadUrl(
   input: GenerateUploadUrlInput,
   context: UsecaseContext,
@@ -42,7 +30,6 @@ export async function generateDiaryImageUploadUrl(
   const { fileName, fileType, fileSize } = input;
   const { userId } = context;
 
-  // ファイルタイプの検証
   if (!isAllowedImageType(fileType)) {
     returnValidationErrors(getSignedUploadUrlSchema, {
       fileType: {
@@ -51,7 +38,6 @@ export async function generateDiaryImageUploadUrl(
     });
   }
 
-  // ファイルサイズの検証
   if (!isValidFileSize(fileSize)) {
     returnValidationErrors(getSignedUploadUrlSchema, {
       fileSize: {
@@ -60,7 +46,6 @@ export async function generateDiaryImageUploadUrl(
     });
   }
 
-  // Presigned URLの生成
   const { url, headers, publicUrl, expiresAt, path } = await generateUploadUrl({
     userId,
     fileName,

@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useHookFormOptimisticAction } from '@next-safe-action/adapter-react-hook-form/hooks';
 import { Check, X } from 'lucide-react';
-import React from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -16,14 +15,11 @@ import { cn } from '@/lib/utils/utils';
 
 interface TaskItemProps {
   todo: Todo;
-  todos: Todo[];
 }
 
-function TaskItemComponent({ todo, todos }: TaskItemProps) {
-  // IDをバインドしたアクションを作成
+export function TaskItem({ todo }: TaskItemProps) {
   const boundToggleTodoAction = toggleTodoAction.bind(null, todo.id);
 
-  // 楽観的更新を使用したアクションの設定
   const { form, action } = useHookFormOptimisticAction(
     boundToggleTodoAction,
     zodResolver(z.object({ completed: z.boolean() })),
@@ -34,13 +30,12 @@ function TaskItemComponent({ todo, todos }: TaskItemProps) {
         },
       },
       actionProps: {
-        currentState: { todos },
+        currentState: { todo },
         updateFn: (state, input) => ({
-          todos: state.todos.map((t) =>
-            t.id === todo.id
-              ? { ...t, completed: input.completed ?? t.completed }
-              : t,
-          ),
+          todo: {
+            ...state.todo,
+            completed: input.completed ?? state.todo.completed,
+          },
         }),
         onSuccess: () => {
           toast.success(
@@ -60,9 +55,7 @@ function TaskItemComponent({ todo, todos }: TaskItemProps) {
     },
   );
 
-  // 楽観的状態から現在のTODOを取得
-  const optimisticTodo =
-    action.optimisticState?.todos.find((t: Todo) => t.id === todo.id) || todo;
+  const optimisticTodo = action.optimisticState?.todo ?? todo;
 
   const handleToggle = () => {
     form.setValue('completed', !optimisticTodo.completed);
@@ -121,17 +114,3 @@ function TaskItemComponent({ todo, todos }: TaskItemProps) {
     </Card>
   );
 }
-
-// React.memoでラップしてエクスポート
-export const TaskItem = React.memo(
-  TaskItemComponent,
-  (prevProps, nextProps) => {
-    // todoの内容が変わらなければ再レンダリングをスキップ
-    return (
-      prevProps.todo.id === nextProps.todo.id &&
-      prevProps.todo.completed === nextProps.todo.completed &&
-      prevProps.todo.title === nextProps.todo.title &&
-      prevProps.todo.updatedAt === nextProps.todo.updatedAt
-    );
-  },
-);

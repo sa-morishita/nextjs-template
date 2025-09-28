@@ -1,14 +1,7 @@
-/**
- * クライアントサイドでのblurDataURL生成ユーティリティ
- */
+const TARGET_SIZE = 8;
+const JPEG_QUALITY = 0.3;
+const BLUR_FILTER = 'blur(1px)';
 
-/**
- * ファイルからblurDataURLを生成する
- * Canvas APIを使用してクライアントサイドで実行
- *
- * @param file - 画像ファイル
- * @returns Promise<string> - base64エンコードされたblurDataURL
- */
 export const generateClientBlurDataURL = async (
   file: File,
 ): Promise<string> => {
@@ -24,18 +17,14 @@ export const generateClientBlurDataURL = async (
 
     img.onload = () => {
       try {
-        // 超小サイズ（8x8推奨）でファイルサイズを最小化
-        canvas.width = 8;
-        canvas.height = 8;
+        canvas.width = TARGET_SIZE;
+        canvas.height = TARGET_SIZE;
 
-        // 軽いblur効果を適用
-        ctx.filter = 'blur(1px)';
-        ctx.drawImage(img, 0, 0, 8, 8);
+        ctx.filter = BLUR_FILTER;
+        ctx.drawImage(img, 0, 0, TARGET_SIZE, TARGET_SIZE);
 
-        // 高圧縮JPEG（品質30%）でbase64生成
-        const blurDataUrl = canvas.toDataURL('image/jpeg', 0.3);
+        const blurDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 
-        // メモリクリーンアップ
         URL.revokeObjectURL(img.src);
 
         resolve(blurDataUrl);
@@ -48,7 +37,6 @@ export const generateClientBlurDataURL = async (
       reject(new Error('Failed to load image'));
     };
 
-    // FileからObject URLを作成して画像として読み込み
     img.src = URL.createObjectURL(file);
   });
 };

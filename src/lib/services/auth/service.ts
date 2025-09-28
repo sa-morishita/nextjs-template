@@ -3,14 +3,6 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './config';
 
-/**
- * Better Auth サービス層
- * 認証関連の実処理を担当
- */
-
-/**
- * エラーオブジェクトの型ガード
- */
 function isErrorWithMessage(error: unknown): error is { message: string } {
   return (
     typeof error === 'object' &&
@@ -42,20 +34,12 @@ export interface SignUpData {
   name: string;
 }
 
-/**
- * メールアドレスとパスワードでサインイン
- */
 export async function signInWithEmail(data: SignInData) {
-  console.log('🔐 Attempting sign in with:', data.email);
-
   try {
     const result = await auth.api.signInEmail({
       body: data,
       headers: await headers(),
     });
-
-    console.log('🔐 Sign in result:', result ? 'Success' : 'Failed');
-    console.log('🔐 User ID:', result?.user?.id);
 
     if (!result) {
       throw new Error('ログインに失敗しました');
@@ -74,7 +58,6 @@ export async function signInWithEmail(data: SignInData) {
       console.error('🔐 Sign in error:', error);
     }
 
-    // Better Authのエラーステータスをチェック
     if (isBetterAuthError(error)) {
       if (error.status === 'FORBIDDEN' || error.statusCode === 403) {
         if (
@@ -94,7 +77,6 @@ export async function signInWithEmail(data: SignInData) {
       }
     }
 
-    // その他の具体的なエラーメッセージ
     if (isBetterAuthError(error)) {
       const bodyMessage =
         typeof error.body === 'object' &&
@@ -120,7 +102,6 @@ export async function signInWithEmail(data: SignInData) {
         );
       }
 
-      // デフォルトのエラーメッセージ
       throw new Error(
         'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
       );
@@ -132,20 +113,11 @@ export async function signInWithEmail(data: SignInData) {
   }
 }
 
-/**
- * メールアドレスとパスワードでサインアップ
- * nextCookiesプラグインが自動的にセッションクッキーを設定
- */
 export async function signUpWithEmail(data: SignUpData) {
-  console.log('🔐 Attempting sign up with:', data.email);
-
   const result = await auth.api.signUpEmail({
     body: data,
     headers: await headers(),
   });
-
-  console.log('🔐 Sign up result:', result ? 'Success' : 'Failed');
-  console.log('🔐 Sign up user ID:', result?.user?.id);
 
   if (!result) {
     throw new Error('ユーザー登録に失敗しました');
@@ -154,21 +126,12 @@ export async function signUpWithEmail(data: SignUpData) {
   return result;
 }
 
-/**
- * サインアウト
- */
 export async function signOut(): Promise<void> {
   await auth.api.signOut({
     headers: await headers(),
   });
 }
 
-/**
- * 現在のセッション取得
- */
-/**
- * クッキーを強制削除する関数
- */
 async function clearSessionCookies() {
   const cookieStore = await cookies();
 
@@ -194,7 +157,6 @@ export async function getSession() {
   });
 
   if (!session) {
-    // セッションがない場合、クッキーを削除してからリダイレクト
     await clearSessionCookies();
     redirect('/auth/login');
   }
@@ -202,24 +164,14 @@ export async function getSession() {
   return session;
 }
 
-/**
- * 認証メール再送信
- */
 export async function resendVerificationEmail(data: { email: string }) {
-  console.log('🔐 Resending verification email to:', data.email);
-
   const result = await auth.api.sendVerificationEmail({
     body: {
       email: data.email,
-      callbackURL: '/', // 認証後のリダイレクト先
+      callbackURL: '/',
     },
     headers: await headers(),
   });
-
-  console.log(
-    '🔐 Resend verification email result:',
-    result ? 'Success' : 'Failed',
-  );
 
   if (!result) {
     throw new Error('認証メールの再送信に失敗しました');
@@ -229,28 +181,18 @@ export async function resendVerificationEmail(data: { email: string }) {
 }
 
 export async function requestPasswordReset(data: { email: string }) {
-  console.log('🔑 Requesting password reset for:', data.email);
-
   try {
     const result = await auth.api.forgetPassword({
       body: {
         email: data.email,
-        redirectTo: '/auth/reset-password', // リセットページURL
+        redirectTo: '/auth/reset-password',
       },
       headers: await headers(),
     });
 
-    console.log(
-      '🔑 Password reset request result:',
-      result ? 'Success' : 'Failed',
-    );
-
-    // セキュリティ: 存在しないメールアドレスでも成功レスポンスを返す
-    return { success: true };
+    return result ? { success: true } : { success: false };
   } catch (error: unknown) {
     console.error('🔑 Password reset request error:', error);
-
-    // セキュリティ: エラー詳細を隠してアカウント列挙攻撃を防ぐ
     return { success: true };
   }
 }
@@ -259,8 +201,6 @@ export async function resetPassword(data: {
   token: string;
   newPassword: string;
 }) {
-  console.log('🔑 Executing password reset with token');
-
   try {
     const result = await auth.api.resetPassword({
       body: {
@@ -269,11 +209,6 @@ export async function resetPassword(data: {
       },
       headers: await headers(),
     });
-
-    console.log(
-      '🔑 Password reset execution result:',
-      result ? 'Success' : 'Failed',
-    );
 
     if (!result) {
       throw new Error('パスワードのリセットに失敗しました');
@@ -288,7 +223,6 @@ export async function resetPassword(data: {
         statusCode: error.statusCode,
       });
 
-      // エラーメッセージの詳細化
       if (error.status === 'BAD_REQUEST' || error.statusCode === 400) {
         if (
           error.message?.includes('expired') ||

@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useHookFormAction } from '@next-safe-action/adapter-react-hook-form/hooks';
 import Image from 'next/image';
 import { useAction } from 'next-safe-action/hooks';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +49,14 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     createDiaryAction,
     zodResolver(createDiaryFormSchema),
@@ -84,7 +92,6 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
     onSuccess: async (result) => {
       if (result.data && pendingFile) {
         try {
-          // Presigned URLを使ってクライアントから直接アップロード
           await uploadFileWithSignedUrl(pendingFile, {
             url: result.data.url,
             headers: result.data.headers,
@@ -117,29 +124,28 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // プレビュー用URLを設定
-    const previewUrl = URL.createObjectURL(file);
-    setPreviewUrl(previewUrl);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
     setIsUploading(true);
     setPendingFile(file);
 
-    // blur生成（非同期で並列実行）
     const blurDataUrlPromise = generateClientBlurDataURL(file);
 
-    // Presigned URLを取得
     await getSignedUrl({
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
     });
 
-    // blur生成完了を待ってformに設定
     try {
       const blurDataUrl = await blurDataUrlPromise;
       form.setValue('blurDataUrl', blurDataUrl);
     } catch (error) {
       console.error('Blur generation failed:', error);
-      // blur生成に失敗してもアップロード処理は続行
     }
   };
 
@@ -192,7 +198,6 @@ export function DiaryForm({ hasTodaysDiary }: DiaryFormProps) {
           )}
         />
 
-        {/* 画像アップロード */}
         <FormField
           control={form.control}
           name="imageUrl"

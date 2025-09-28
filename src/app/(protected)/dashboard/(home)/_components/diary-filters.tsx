@@ -1,15 +1,8 @@
 'use client';
 
 import { Calendar, Search } from 'lucide-react';
-import { useQueryState } from 'nuqs';
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import { debounce, useQueryState } from 'nuqs';
+import { useId, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,74 +14,34 @@ export function DiaryFilters() {
   const dateFromId = useId();
   const dateToId = useId();
 
-  // URL状態管理
   const [search, setSearch] = useQueryState('search', {
     defaultValue: '',
     clearOnDefault: true,
-    shallow: false, // Server Componentsの再レンダリングを有効化
+    shallow: false,
     startTransition,
   });
 
   const [dateFrom, setDateFrom] = useQueryState('dateFrom', {
     defaultValue: '',
     clearOnDefault: true,
-    shallow: false, // Server Componentsの再レンダリングを有効化
+    shallow: false,
     startTransition,
   });
 
   const [dateTo, setDateTo] = useQueryState('dateTo', {
     defaultValue: '',
     clearOnDefault: true,
-    shallow: false, // Server Componentsの再レンダリングを有効化
+    shallow: false,
     startTransition,
   });
 
-  // ローカル状態（入力値）
-  const [localSearch, setLocalSearch] = useState(search);
-  const [isComposing, setIsComposing] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // デバウンス処理（500ms）
-  const debouncedSetSearch = useCallback(
-    (value: string) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        setSearch(value);
-      }, 500);
-    },
-    [setSearch],
-  );
-
-  // 検索値が外部から変更された場合（URLパラメータ変更など）
-  useEffect(() => {
-    setLocalSearch(search);
-  }, [search]);
-
-  // クリーンアップ
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
   const handleSearchChange = (value: string) => {
-    setLocalSearch(value);
-    // 日本語変換中でない場合のみデバウンス処理を実行
-    if (!isComposing) {
-      debouncedSetSearch(value);
-    }
+    setSearch(value, {
+      limitUrlUpdates: value === '' ? undefined : debounce(400),
+    });
   };
 
   const handleReset = () => {
-    // タイマーをクリア
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    setLocalSearch('');
     startTransition(() => {
       setSearch('');
       setDateFrom('');
@@ -103,7 +56,6 @@ export function DiaryFilters() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* 検索入力 */}
           <div className="space-y-2">
             <Label htmlFor={searchInputId}>検索</Label>
             <div className="relative">
@@ -112,21 +64,14 @@ export function DiaryFilters() {
                 id={searchInputId}
                 type="search"
                 placeholder="日記を検索..."
-                value={localSearch}
+                value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={(e) => {
-                  setIsComposing(false);
-                  // 変換確定時にデバウンス処理を実行
-                  debouncedSetSearch(e.currentTarget.value);
-                }}
                 className="pl-10"
                 disabled={isPending}
               />
             </div>
           </div>
 
-          {/* 日付フィルター */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={dateFromId}>開始日</Label>
@@ -158,7 +103,6 @@ export function DiaryFilters() {
             </div>
           </div>
 
-          {/* リセットボタン */}
           {(search || dateFrom || dateTo) && (
             <Button
               type="button"

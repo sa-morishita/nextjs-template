@@ -1,6 +1,3 @@
-/**
- * Diary関連のUsecases
- */
 import 'server-only';
 import { returnValidationErrors } from 'next-safe-action';
 import type { z } from 'zod';
@@ -17,24 +14,12 @@ import { createDiary } from '@/lib/mutations/diaries';
 import { getTodaysDiaryByUserId, getUserDiaries } from '@/lib/queries/diaries';
 import { createDiaryFormSchema } from '@/lib/schemas/diary';
 
-/**
- * Usecase Context
- */
 interface UsecaseContext {
   userId: string;
 }
 
-/**
- * 日記作成の入力型
- */
 export type CreateDiaryInput = z.infer<typeof createDiaryFormSchema>;
 
-/**
- * 日記作成のビジネスロジック
- * - タイトルとコンテンツの妥当性チェック
- * - 1日1日記ルールのチェック
- * - 日記作成
- */
 export async function createDiaryUsecase(
   input: CreateDiaryInput,
   context: UsecaseContext,
@@ -42,7 +27,6 @@ export async function createDiaryUsecase(
   const { title, content, imageUrl, blurDataUrl } = input;
   const { userId } = context;
 
-  // タイトルの妥当性チェック
   if (!isValidDiaryTitle(title)) {
     returnValidationErrors(createDiaryFormSchema, {
       title: {
@@ -51,7 +35,6 @@ export async function createDiaryUsecase(
     });
   }
 
-  // コンテンツの妥当性チェック
   if (!isValidDiaryContent(content)) {
     returnValidationErrors(createDiaryFormSchema, {
       content: {
@@ -60,7 +43,6 @@ export async function createDiaryUsecase(
     });
   }
 
-  // 1日1日記ルールのチェック
   const todaysDiary = await getTodaysDiaryByUserId(userId);
   if (todaysDiary) {
     returnValidationErrors(createDiaryFormSchema, {
@@ -68,7 +50,6 @@ export async function createDiaryUsecase(
     });
   }
 
-  // 日記を作成
   await createDiary({
     userId,
     title,
@@ -80,20 +61,12 @@ export async function createDiaryUsecase(
   });
 }
 
-/**
- * Query用Usecases
- */
-
-/**
- * ユーザーの日記リストを取得する
- */
 export async function getDiaryListUsecase(
   filters: DiaryFilters,
   context: UsecaseContext,
 ) {
   const { userId } = context;
 
-  // フィルターの日付を調整（終了日を1日の終わりまで含む）
   const adjustedFilters: DiaryFilters = {
     ...filters,
     dateTo: filters.dateTo ? adjustDateToEndOfDay(filters.dateTo) : undefined,
@@ -102,9 +75,6 @@ export async function getDiaryListUsecase(
   return getUserDiaries(userId, adjustedFilters);
 }
 
-/**
- * 今日の日記が既に作成されているかチェックする
- */
 export async function checkTodaysDiaryUsecase(
   context: UsecaseContext,
 ): Promise<boolean> {

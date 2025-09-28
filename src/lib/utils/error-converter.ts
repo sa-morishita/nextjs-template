@@ -6,21 +6,15 @@ interface ActionError {
   };
 }
 
-/**
- * next-safe-actionのエラーからユーザー向けメッセージに変換
- */
 export function convertActionErrorToMessage(
   error: ActionError | undefined,
   fallbackMessage: string,
 ): string {
-  // Server Error (従来通り)
   if (error?.serverError) {
     return error.serverError;
   }
 
-  // Validation Errors (新規対応)
   if (error?.validationErrors) {
-    // ルートエラーを優先
     if (
       error.validationErrors._errors &&
       error.validationErrors._errors.length > 0
@@ -28,7 +22,6 @@ export function convertActionErrorToMessage(
       return error.validationErrors._errors[0];
     }
 
-    // フィールドエラーから最初のものを取得
     const fieldErrors = Object.entries(error.validationErrors)
       .filter(([key]) => key !== '_errors')
       .map(([, value]) => {
@@ -47,6 +40,5 @@ export function convertActionErrorToMessage(
     }
   }
 
-  // フォールバック
   return fallbackMessage;
 }

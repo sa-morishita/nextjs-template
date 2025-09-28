@@ -13,7 +13,6 @@ export const createTodoAction = privateActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { userId } = ctx;
 
-    // Usecaseを呼び出し（ビジネスロジックはUsecaseに委譲）
     await createTodoUsecase(parsedInput, { userId });
 
     revalidateTag(CACHE_TAGS.TODOS.USER(userId));
@@ -25,13 +24,11 @@ export const updateTodoAction = privateActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { userId } = ctx;
 
-    // Usecaseを呼び出し（ビジネスロジックはUsecaseに委譲）
     await updateTodoUsecase(parsedInput, { userId });
 
     revalidateTag(CACHE_TAGS.TODOS.USER(userId));
   });
 
-// toggleTodoAction: IDをバインドして完了状態を切り替える専用のアクション
 export const toggleTodoAction = privateActionClient
   .metadata({ actionName: 'toggleTodo' })
   .bindArgsSchemas<[todoId: z.ZodString]>([
@@ -41,7 +38,6 @@ export const toggleTodoAction = privateActionClient
   .action(async ({ parsedInput, bindArgsParsedInputs: [todoId], ctx }) => {
     const { userId } = ctx;
 
-    // Usecaseを呼び出し
     await updateTodoUsecase(
       { id: todoId, completed: parsedInput.completed },
       { userId },

@@ -15,15 +15,11 @@ export const createDiaryAction = privateActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { userId } = ctx;
 
-    // Usecaseを呼び出し（ビジネスロジックはUsecaseに委譲）
     await createDiaryUsecase(parsedInput, { userId });
 
     revalidateTag(CACHE_TAGS.DIARIES.USER(userId));
   });
 
-/**
- * 日記画像アップロード用Presigned URL生成Server Action
- */
 export const getSignedUploadUrlAction = privateActionClient
   .metadata({ actionName: 'getDiaryImageUploadUrl' })
   .inputSchema(getSignedUploadUrlSchema, {
@@ -33,8 +29,5 @@ export const getSignedUploadUrlAction = privateActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { userId } = ctx;
 
-    // Usecaseを呼び出し（ビジネスロジックはUsecaseに委譲）
-    const result = await generateDiaryImageUploadUrl(parsedInput, { userId });
-
-    return result;
+    return generateDiaryImageUploadUrl(parsedInput, { userId });
   });
