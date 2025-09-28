@@ -71,7 +71,7 @@ for example_file in .env*.example; do
         else
             cp "$example_file" "$env_file"
             echo "✅ $example_file → $env_file をコピーしました"
-            
+
             # .env.localの場合は開発環境用の値を置換
             if [ "$env_file" = ".env.local" ]; then
                 # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
@@ -106,20 +106,24 @@ for example_file in .env*.example; do
                 fi
                 echo "🔧 開発環境用の設定値を $env_file に適用しました"
             fi
-            
+
             # .env.test.localの場合は開発環境と同じMinIOポートのみ設定
             if [ "$env_file" = ".env.test.local" ]; then
                 # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
                 if [[ "$OSTYPE" == "darwin"* ]]; then
                     # macOS
-                    sed -i '' "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_ENDPOINT=.*|MINIO_ENDPOINT=http://127.0.0.1:$MINIO_PORT|" "$env_file"
                     sed -i '' "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
                     sed -i '' "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
+                    sed -i '' "s|^MINIO_PORT=.*|MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i '' "s|^MINIO_CONSOLE_PORT=.*|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
                 else
                     # Linux
-                    sed -i "s|^MINIO_ENDPOINT=$|MINIO_ENDPOINT=http://localhost:$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_ENDPOINT=.*|MINIO_ENDPOINT=http://127.0.0.1:$MINIO_PORT|" "$env_file"
                     sed -i "s|^MINIO_BUCKET=.*|MINIO_BUCKET=app|" "$env_file"
                     sed -i "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_PORT/app|" "$env_file"
+                    sed -i "s|^MINIO_PORT=.*|MINIO_PORT=$MINIO_PORT|" "$env_file"
+                    sed -i "s|^MINIO_CONSOLE_PORT=.*|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" "$env_file"
                 fi
                 echo "🔧 テスト環境用のMinIOポートを $env_file に設定しました: $MINIO_PORT"
             fi

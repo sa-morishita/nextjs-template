@@ -308,6 +308,30 @@ setup_worktree() {
         echo -e "${BLUE}  NEXT_PUBLIC_SITE_URL: http://localhost:$NEXTJS_PORT${NC}"
     fi
 
+    # 5.5. .env.test.localの環境変数も更新（テスト用）
+    if [ -f ".env.test.local" ]; then
+        echo -e "${YELLOW}.env.test.localの環境変数を更新しています...${NC}"
+
+        # sedコマンドで値を置換（macOS/BSD sedとGNU sedの両方に対応）
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s|^MINIO_ENDPOINT=.*|MINIO_ENDPOINT=http://127.0.0.1:$MINIO_API_PORT|" .env.test.local
+            sed -i '' "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_API_PORT/app|" .env.test.local
+            sed -i '' "s|^MINIO_PORT=.*|MINIO_PORT=$MINIO_API_PORT|" .env.test.local
+            sed -i '' "s|^MINIO_CONSOLE_PORT=.*|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.test.local
+            sed -i '' "s|^MINIO_DATA_DIR=.*|MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.test.local
+        else
+            # Linux
+            sed -i "s|^MINIO_ENDPOINT=.*|MINIO_ENDPOINT=http://127.0.0.1:$MINIO_API_PORT|" .env.test.local
+            sed -i "s|^MINIO_PUBLIC_BASE_URL=.*|MINIO_PUBLIC_BASE_URL=http://localhost:$MINIO_API_PORT/app|" .env.test.local
+            sed -i "s|^MINIO_PORT=.*|MINIO_PORT=$MINIO_API_PORT|" .env.test.local
+            sed -i "s|^MINIO_CONSOLE_PORT=.*|MINIO_CONSOLE_PORT=$MINIO_CONSOLE_PORT|" .env.test.local
+            sed -i "s|^MINIO_DATA_DIR=.*|MINIO_DATA_DIR=$MINIO_DATA_DIR|" .env.test.local
+        fi
+
+        echo -e "${GREEN}✅ .env.test.localの環境変数を更新しました${NC}"
+    fi
+
     # 6. 依存関係のインストール
     echo -e "${YELLOW}依存関係をインストールしています...${NC}"
     if command -v pnpm >/dev/null 2>&1; then
