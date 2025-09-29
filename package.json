@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "test:all": "pnpm run test:unit && pnpm run test:integration && pnpm run test:storage && pnpm run test:e2e",
     "test:coverage": "vitest run --coverage",
-    "db:migrate:dev": "drizzle-kit drop && drizzle-kit generate && drizzle-kit migrate && tsx src/db/seed.ts",
+    "db:migrate:dev": "drizzle-kit generate && drizzle-kit migrate && tsx src/db/seed.ts",
+    "db:migrate:dev:no-seed": "drizzle-kit generate && drizzle-kit migrate",
     "db:migrate:prod": "drizzle-kit generate && drizzle-kit migrate",
     "db:studio": "source .env.local && drizzle-kit studio --port $DRIZZLE_STUDIO_PORT",
     "audit": "pnpm audit --audit-level=high"
@@ -132,5 +133,6 @@
     "overrides": {
       "esbuild": ">=0.25.0"
     }
-  }
+  },
+  "packageManager": "pnpm@10.15.1+sha512.34e538c329b5553014ca8e8f4535997f96180a1d0f614339357449935350d924e22f8614682191264ec33d1462ac21561aff97f6bb18065351c162c7e8f6de67"
 }

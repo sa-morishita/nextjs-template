@@ -11,18 +11,55 @@ import * as schema from '@/db/schema';
 // .env.localを読み込む
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-// 本番環境での実行を防ぐ
-if (
-  process.env.NODE_ENV === 'production' ||
-  process.env.DATABASE_URL?.includes('supabase.co') ||
-  process.env.DATABASE_URL?.includes('neon.tech')
-) {
-  console.log('❌ Cannot seed production database');
-  process.exit(0);
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('❌ DATABASE_URL が未設定のためシードを中止しました');
+  process.exit(1);
 }
 
-// データベース接続
-const connectionString = process.env.DATABASE_URL || '';
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const isDevelopment = nodeEnv === 'development';
+
+if (nodeEnv === 'production') {
+  console.error('❌ 本番環境ではシードを実行できません');
+  process.exit(1);
+}
+
+let databaseUrl: URL | null = null;
+try {
+  databaseUrl = new URL(connectionString);
+} catch {
+  console.error(
+    '❌ DATABASE_URL が不正な形式です。開発環境以外でのリセットを防ぐため中止します',
+  );
+  process.exit(1);
+}
+
+const hostname = databaseUrl?.hostname ?? '';
+
+const isLocalHostname = (target: string) => {
+  if (!target) return false;
+  if (['localhost', '127.0.0.1', '::1', 'db'].includes(target)) return true;
+  if (target.endsWith('.local')) return true;
+  if (/^192\.168\./u.test(target)) return true;
+  if (/^10\./u.test(target)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./u.test(target)) return true;
+  // 拡張子を持たないホスト名（Docker ネットワークなど）はローカル扱い
+  if (!target.includes('.')) return true;
+  return false;
+};
+
+const isExplicitlyBlocked =
+  hostname.includes('supabase.co') || hostname.includes('neon.tech');
+
+if (!isDevelopment || !isLocalHostname(hostname) || isExplicitlyBlocked) {
+  console.error(
+    '❌ Reset はローカル開発環境 (NODE_ENV=development かつローカルホスト) でのみ実行できます',
+  );
+  process.exit(1);
+}
+
 const sql = postgres(connectionString, { max: 1 });
 const db = drizzle(sql);
 
