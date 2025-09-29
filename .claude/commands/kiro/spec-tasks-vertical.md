@@ -11,12 +11,14 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
 ## Task: Generate Vertical Slice Implementation Tasks
 
 ### Prerequisites & Context Loading
+
 - If invoked with `-y` flag ($2 == "-y"): Auto-approve requirements and design in `spec.json`
 - Otherwise: Stop if requirements/design missing or unapproved with message:
   "Run `/kiro:spec-requirements` and `/kiro:spec-design` first, or use `-y` flag to auto-approve"
 - If tasks.md exists: Prompt [o]verwrite/[m]erge/[c]ancel
 
 **Context Loading (Full Paths)**:
+
 1. `.kiro/specs/$1/requirements.md` - Feature requirements (EARS format)
 2. `.kiro/specs/$1/design.md` - Technical design document
 3. `.kiro/steering/` - Project-wide guidelines and constraints:
@@ -32,6 +34,7 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
 ### CRITICAL Task Numbering Rules (MUST FOLLOW)
 
 **⚠️ MANDATORY: Sequential major task numbering & hierarchy limits**
+
 - Major tasks: 1, 2, 3, 4, 5... (MUST increment sequentially)
 - Sub-tasks: 1.1, 1.2, 2.1, 2.2... (reset per major task)
 - **Maximum 2 levels of hierarchy** (no 1.1.1 or deeper)
@@ -46,21 +49,23 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
    - Enable human testing after each major task completion
    - Prioritize visible progress over architectural perfection
 
-2. **Task Structure Pattern** (for each feature):
-   ```
-   X. [Feature Name] - Complete vertical slice
-   X.1 Database: Minimal schema for this feature only
-   X.2 Backend: Server actions and data logic
-   X.3 Frontend: Basic working UI components
-   X.4 Integration: Wire everything together
-   X.5 Manual testing checkpoint
-   ```
+2. **Task Structure Pattern** (for each feature, enforce UI-first flow):
 
-3. **MVP-First Progression**:
-   - Task 1: Absolute minimum viable feature (login, basic CRUD, etc.)
-   - Task 2-N: Add features incrementally, each fully functional
-   - Later tasks: Refine, optimize, add advanced features
-   - Final tasks: Polish, error handling, edge cases
+```
+X. [Feature Name] - Complete vertical slice
+X.1 Frontend Shell: Create visible UI with mocked or stubbed data so the flow can be exercised immediately
+X.2 Backend Foundations: Add minimal schema and server stubs needed to support the UI (can return hard-coded values)
+X.3 Real Data Integration: Replace stubs with actual data sources, wire UI to live server actions, remove temporary mocks
+X.4 Fit & Finish: Extend behaviours (loading states, validation, cache invalidation) and tighten the UX for this slice
+X.5 Manual testing checkpoint
+```
+
+3. **MVP-First Progression with UI Validation**:
+
+- Task 1: Absolute minimum viable feature (login, basic CRUD, etc.)
+- Task 2-N: Add features incrementally, each delivering a visible UI slice before deep backend work
+- Later tasks: Refine, optimize, add advanced features once UI behaviour is observable
+- Final tasks: Polish, error handling, edge cases
 
 4. **Early Validation Focus**:
    - Database migrations must be runnable after EVERY task
@@ -83,9 +88,9 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
    - Keep foreign keys simple in early iterations
 
 3. **UI-First Visibility**:
-   - Even if ugly, get UI working early
-   - Use simple forms/tables before complex components  
-   - Real data over mocks from the start
+   - Every major task must begin with a usable UI shell, even if backed by placeholder data
+   - Use simple forms/tables before complex components
+   - Replace mocks with live data in a dedicated sub-task (do not skip documenting the switch-over)
    - Basic styling is fine, polish comes later
 
 4. **Natural language descriptions** (same as original):
@@ -104,84 +109,69 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
 # Implementation Plan - Vertical Slice Approach
 
 - [ ] 1. Foundation and minimal authentication
-- [ ] 1.1 Set up project with core infrastructure
-  - Initialize project with required stack
-  - Configure basic routing and middleware
-  - Set up development environment
-  - Create minimal database connection
+- [ ] 1.1 Prototype authentication UI with temporary client-side validation
+  - Render login and sign-up forms with static handlers and mocked responses
+  - Display simple success/error states without calling the server
   - _Requirements: Infrastructure setup_
 
-- [ ] 1.2 Create user authentication schema
-  - Design users table with essential fields only
-  - Add sessions/tokens table
-  - Create initial migration
+- [ ] 1.2 Introduce authentication schema and lightweight server stubs
+  - Add users table with essential fields only
+  - Create server actions that return canned data to match the mocked UI
+  - Keep migrations minimal so UI continues to function
   - _Requirements: 7.1_
 
-- [ ] 1.3 Build authentication server actions
-  - Implement user registration server action
-  - Create login action with session management
-  - Add logout server action
-  - Handle validation and error responses
+- [ ] 1.3 Replace stubs with real authentication logic
+  - Implement registration/login/logout actions backed by the database
+  - Remove temporary client-side mocks and connect UI to live responses
+  - Add error handling paths surfaced in the UI
   - _Requirements: 7.1, 7.2_
 
-- [ ] 1.4 Create minimal authentication UI
-  - Build simple login form with server action
-  - Add registration form component
-  - Show logged-in state using server components
-  - Handle server action responses and errors
+- [ ] 1.4 Fit & finish
+  - Introduce loading indicators, disabled states, and session awareness in the header
+  - Ensure redirects and cache revalidation behave correctly
   - _Requirements: 7.1, 7.2_
 
 - [ ] 1.5 Manual testing checkpoint
-  - Test user registration flow
-  - Verify login/logout works
-  - Check session persistence
-  - Confirm error messages display
+  - Execute registration/login/logout via the UI
+  - Confirm session persistence and error messaging end-to-end
   - _Requirements: Validate authentication works end-to-end_
 
 - [ ] 2. Core feature: Task management basics
-- [ ] 2.1 Add tasks schema
-  - Create tasks table (id, title, user_id only)
-  - Add foreign key to users
-  - Run migration
+- [ ] 2.1 Sketch task dashboard UI with mocked data
+  - Build task list and creation form components using in-memory data
+  - Demonstrate optimistic updates visually without persistence
+  - _Requirements: 2.1, 3.1_
+
+- [ ] 2.2 Add minimal task schema and server stubs
+  - Create tasks table (id, title, user_id only) and migration
+  - Supply server action placeholders that echo fake responses consumed by the UI
   - _Requirements: 2.1_
 
-- [ ] 2.2 Implement task CRUD server actions
-  - Create task server action
-  - Implement server component for listing tasks
-  - Update task server action
-  - Delete task server action
-  - _Requirements: 2.1, 2.2_
-
-- [ ] 2.3 Build task management UI
-  - Create task list component
-  - Add new task form
-  - Implement inline editing
-  - Add delete buttons
+- [ ] 2.3 Implement real task CRUD logic and wire up the UI
+  - Replace stubbed actions with actual create/list/update/delete operations
+  - Connect UI components to live data and remove temporary mocks
   - _Requirements: 2.1, 2.2, 3.1_
 
-- [ ] 2.4 Wire frontend to server actions
-  - Connect forms to server actions
-  - Handle loading states with useFormStatus
-  - Show server action errors
-  - Revalidate data after mutations
+- [ ] 2.4 Extend interactions and state handling
+  - Add loading indicators, error toasts, and cache invalidation
+  - Ensure multi-user isolation and optimistic update rollback
   - _Requirements: Integration_
 
 - [ ] 2.5 Manual testing checkpoint
-  - Create multiple tasks
-  - Edit task titles
-  - Delete tasks
-  - Verify data persists on refresh
-  - Test with multiple users
+  - Create, edit, and delete tasks through the UI and verify persistence
+  - Confirm behaviour across refreshes and concurrent sessions
   - _Requirements: Validate task management_
 ```
 
 ### Requirements Coverage Check
+
 - **MANDATORY**: Ensure ALL requirements from requirements.md are covered
 - Track which requirements are partially vs fully implemented
 - Later tasks can enhance features introduced earlier
 - No requirement should be left without any implementation
 
 ### Anti-Patterns to Avoid
+
 ❌ Building entire backend before any UI
 ❌ Creating all database tables upfront
 ❌ Mocking data for extended periods
@@ -189,6 +179,7 @@ Generate implementation tasks for feature: **$1** using vertical slice developme
 ❌ Postponing integration until the end
 
 ### Document Generation
+
 - Generate `.kiro/specs/$1/tasks.md` using vertical slice approach
 - **Language**: Use language from `spec.json.language` field, default to English
 - Update `.kiro/specs/$1/spec.json`:
@@ -208,8 +199,9 @@ The following is for Claude Code conversation only - NOT for the generated docum
 ## Vertical Slice Benefits
 
 This approach ensures:
+
 - 🚀 Faster feedback loops with working features
-- 🔍 Early detection of integration issues  
+- 🔍 Early detection of integration issues
 - 👤 Human-testable results after each major task
 - 📈 Visible progress throughout development
 - 🛠️ Easier debugging with smaller change sets
@@ -219,13 +211,16 @@ This approach ensures:
 After generating tasks.md, implementation proceeds iteratively:
 
 **Each completed major task results in:**
+
 - A deployable feature (even if minimal)
 - Real user interactions possible
 - Validated integration between all layers
 - Confidence before moving to next feature
 
 ### Next Steps: Implementation
+
 Once tasks are approved, start implementation:
+
 ```bash
 /kiro:spec-impl $1          # Execute all pending tasks
 /kiro:spec-impl $1 1        # Complete entire feature slice
@@ -233,12 +228,14 @@ Once tasks are approved, start implementation:
 ```
 
 **Implementation Tips**:
+
 - Complete entire major tasks before moving to next
 - Always run manual testing checkpoints
 - Commit after each feature slice works
 - Use `/clear` if needed, spec files persist
 
 ### Review Checklist (for user reference):
+
 - [ ] Each major task delivers working functionality
 - [ ] Manual testing checkpoints included
 - [ ] Database evolves incrementally

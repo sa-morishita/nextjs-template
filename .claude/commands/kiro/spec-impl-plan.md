@@ -11,43 +11,53 @@ Generate detailed implementation plans for **$1** using Kent Beck's Test-Driven 
 ## Instructions
 
 ### Pre-Execution Validation
+
 Validate required files exist for feature **$1**:
+
 - Requirements: `.kiro/specs/$1/requirements.md`
-- Design: `.kiro/specs/$1/design.md`  
+- Design: `.kiro/specs/$1/design.md`
 - Tasks: `.kiro/specs/$1/tasks.md`
 - Metadata: `.kiro/specs/$1/spec.json`
 
 ### Context Loading
 
 **Core Steering:**
+
 - Structure: @.kiro/steering/structure.md
-- Tech Stack: @.kiro/steering/tech.md  
+- Tech Stack: @.kiro/steering/tech.md
 - Product: @.kiro/steering/product.md
 
 **Custom Steering:**
+
 - Additional `*.md` files in `.kiro/steering/` (excluding structure.md, tech.md, product.md)
 
 **Spec Documents for $1:**
+
 - Metadata: @.kiro/specs/$1/spec.json
 - Requirements: @.kiro/specs/$1/requirements.md
 - Design: @.kiro/specs/$1/design.md
 - Tasks: @.kiro/specs/$1/tasks.md
 
 ### Plan Generation
-1. **Feature**: $1  
+
+1. **Feature**: $1
 2. **Task numbers**: $2 (optional, defaults to all pending tasks)
 3. **Output directory**: `.kiro/specs/$1/implementation-plans/`
 4. **Create implementation plan for each selected task**
+5. **Document verification commands**: include the exact test commands plus `pnpm typecheck` and `pnpm biome check --write .`
 
 ### Implementation Plan Structure
+
 For each task, create a file named `task-{number}-{sanitized-title}.md` containing:
 
 #### 1. Task Overview
+
 - Task ID and title
 - Requirements summary
 - Success criteria
 
 #### 2. File Structure
+
 ```
 # List all files to be created/modified
 - path/to/new/file.ts (new)
@@ -57,17 +67,19 @@ For each task, create a file named `task-{number}-{sanitized-title}.md` containi
 #### 3. TDD Approach
 
 **RED Phase - Test Cases:**
+
 ```typescript
 // Example test structure and assertions
-describe('FeatureName', () => {
-  it('should do X when Y', async () => {
+describe("FeatureName", () => {
+  it("should do X when Y", async () => {
     // Test setup
     // Assertions
-  })
-})
+  });
+});
 ```
 
 **GREEN Phase - Implementation:**
+
 ```typescript
 // File: path/to/implementation.ts
 export async function functionName(params: ParamType): Promise<ReturnType> {
@@ -84,33 +96,39 @@ export class ServiceName {
 ```
 
 **REFACTOR Phase:**
+
 - Extract common patterns to utilities
 - Apply DRY principles
 - Ensure consistent error handling
 - Optimize for performance if needed
 
 #### 4. Dependencies & Imports
+
 - List all new dependencies
 - Required imports for each file
 - Any configuration changes needed
 
 #### 5. Integration Points
+
 - API endpoints affected
 - Database schema changes
 - External service interactions
 - State management updates
 
 #### 6. Verification Checklist
-- [ ] All tests pass
-- [ ] Type checking passes
-- [ ] Linting/formatting passes
+
+- [ ] All required tests pass (document concrete commands such as `pnpm test:unit`, `pnpm test:integration`)
+- [ ] Type checking passes (`pnpm typecheck`)
+- [ ] Linting/formatting passes (`pnpm biome check --write .`)
 - [ ] No regression in existing tests
 - [ ] Database migrations verified (use psql or direct SQL checks when schema changes occur)
 - [ ] Browser/manual UI checks are delegated to developer when necessary
 - [ ] Performance benchmarks (if applicable)
 
 ### Output Summary
+
 After generating all plans:
+
 1. List all generated plan files
 2. Provide command to review plans: `cat .kiro/specs/$1/implementation-plans/*.md`
 3. Next steps for actual implementation
