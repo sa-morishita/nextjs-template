@@ -50,6 +50,41 @@ Validate required files exist for feature **$1**:
 
 For each task, create a file named `task-{number}-{sanitized-title}.md` containing:
 
+#### 0. Required Context Documents (for standalone execution)
+
+**IMPORTANT**: Before starting implementation, read ALL documents below using the Read tool to get complete and up-to-date information.
+
+**Core Steering Documents**:
+
+1. **Project Structure**: `.kiro/steering/structure.md`
+   - Monorepo layout, directory conventions, component boundaries
+   - File naming and organization standards
+
+2. **Technology Stack**: `.kiro/steering/tech.md`
+   - Framework versions, key libraries, development commands
+   - Environment variables, port assignments
+
+3. **Product Context**: `.kiro/steering/product.md`
+   - Product summary, target users, value proposition
+   - Current status and goals
+
+**Feature-Specific Documents**:
+
+4. **Requirements**: `.kiro/specs/$1/requirements.md`
+   - All requirements for this feature
+   - Acceptance criteria relevant to this task
+
+5. **Design**: `.kiro/specs/$1/design.md`
+   - Architectural patterns and decisions
+   - Template conformance checklist
+   - UI-First pattern guidance if applicable
+
+**Custom Steering** (if exists):
+
+- Any additional `*.md` files in `.kiro/steering/` (excluding structure.md, tech.md, product.md)
+
+**Note**: This section provides references only, not summaries. By reading these files directly during implementation, you will always have access to the latest and most complete information.
+
 #### 1. Task Overview
 
 - Task ID and title
@@ -64,7 +99,136 @@ For each task, create a file named `task-{number}-{sanitized-title}.md` containi
 - path/to/existing/file.ts (modify)
 ```
 
-#### 3. TDD Approach
+#### 2.5 UI-First Structure Determination
+
+**CRITICAL**: Before generating TDD approach, determine if this task involves UI components.
+
+##### If Task is X.1 (UI Shell):
+
+**Required UI Structure** (following Template Conformance Checklist from design.md):
+
+```
+app/[feature]/page.tsx                                    ← RSC (orchestration, Suspense)
+app/[feature]/_containers/[feature-name]/
+    ├── index.tsx                                         ← re-export (export { FeatureContainer } from './container')
+    ├── container.tsx                                     ← Server Component (async, data fetching via usecase)
+    └── presentational.tsx                                ← Server Component (UI layout, imports from _components)
+app/[feature]/_components/[feature]-form.tsx              ← Client Component ('use client' - useHookFormAction, interactions)
+lib/actions/[feature].ts                                  ← Server Action (stub implementation)
+lib/schemas/[feature].ts                                  ← Zod schemas (production-ready)
+lib/constants/[feature]-messages.ts                       ← Constants (production-ready)
+```
+
+**CRITICAL**:
+
+1. Never place files directly under `_containers`; always create a subdirectory (`[feature-name]/`) containing `index.tsx`, `container.tsx`, and `presentational.tsx`. This enables parallel data fetching with multiple Suspense boundaries in page.tsx (Next.js App Router best practice).
+2. Implement `presentational.tsx` as a Server Component handling UI layout. Place Client Components requiring interactivity (forms, etc.) in `_components`. Maximize RSC usage for optimal performance.
+
+**Server Action Stub Pattern:**
+
+```typescript
+// lib/actions/[feature].ts
+'use server';
+
+import { actionClient } from '@/lib/utils/safe-action';
+import { [feature]Schema } from '@/lib/schemas';
+
+export const [feature]Action = actionClient
+  .metadata({ actionName: '[domain].[feature]' })
+  .inputSchema([feature]Schema)
+  .action(async ({ parsedInput }) => {
+    // TODO: Task X.2 - Replace with real usecase call
+    console.log('🔨 Mock [feature] action:', parsedInput);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: true }; // Mock response
+  });
+```
+
+**Client Component Production Pattern:**
+
+```typescript
+// _components/[feature]-form.tsx
+'use client';
+
+import { useHookFormAction } from '@next-safe-action/adapter-react-hook-form/hooks';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { [feature]Action } from '@/lib/actions/[feature]';
+import { [feature]Schema } from '@/lib/schemas';
+import { MESSAGES } from '@/lib/constants/[feature]-messages';
+
+export function [Feature]Form() {
+  const router = useRouter();
+
+  const { form, action, handleSubmitWithAction } = useHookFormAction(
+    [feature]Action, // stub action, but production integration
+    zodResolver([feature]Schema),
+    {
+      formProps: { mode: 'onSubmit', defaultValues: { /* ... */ } },
+      actionProps: {
+        onSuccess: () => {
+          toast.success(MESSAGES.SUCCESS);
+          router.push('/target-route');
+        },
+        onError: ({ error }) => {
+          // Task X.4 - Implement convertActionErrorToMessage
+          toast.error(MESSAGES.ERROR);
+        },
+      },
+    }
+  );
+
+  return <Form {...form}>
+    <form onSubmit={handleSubmitWithAction}>
+      {/* Production form fields */}
+    </form>
+  </Form>;
+}
+```
+
+##### If Task is X.2-X.3 (Backend Implementation):
+
+**File Changes Limited To:**
+
+- ✅ `lib/actions/[feature].ts` - Replace stub with real implementation
+- ✅ `lib/usecases/[feature].ts` - Add business logic
+- ✅ `lib/domain/[feature].ts` - Add domain logic
+- ✅ `lib/services/*` - Add external integrations
+- ❌ `_components/*-form.tsx` - **NO CHANGES**
+- ❌ `_containers/*-container.tsx` - **Minimal changes** (only getSession() addition if needed)
+
+**Backend Evolution Pattern:**
+
+```typescript
+// Task X.2: Replace stub with real implementation
+export const [feature]Action = actionClient
+  .metadata({ actionName: '[domain].[feature]' })
+  .inputSchema([feature]Schema)
+  .action(async ({ parsedInput }) => {
+-   // TODO: Task X.2 - Replace with real usecase call
+-   console.log('🔨 Mock [feature] action:', parsedInput);
+-   await new Promise(resolve => setTimeout(resolve, 1000));
+-   return { success: true };
+
++   // Real usecase integration
++   await [feature]Usecase(parsedInput);
++   redirect('/target-route');
+  });
+```
+
+#### 3. TDD Approach (UI-First Pattern Applied)
+
+**Task X.1 Testing Strategy:**
+
+- Test Zod schemas (unit tests)
+- Test client component behavior with stub actions (component tests)
+- Server actions are stubs, tested only for structure validity
+
+**Task X.2-X.3 Testing Strategy:**
+
+- Unit tests for usecase/domain logic
+- Integration tests for full server action → usecase → db flow
+- UI components already tested in X.1, no retesting needed
 
 **RED Phase - Test Cases:**
 
