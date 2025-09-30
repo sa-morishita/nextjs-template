@@ -44,7 +44,7 @@ Validate required files exist for feature **$1**:
 2. **Task numbers**: $2 (optional, defaults to all pending tasks)
 3. **Output directory**: `.kiro/specs/$1/implementation-plans/`
 4. **Create implementation plan for each selected task**
-5. **Document verification commands**: include the exact test commands plus `pnpm typecheck` and `pnpm biome check --write .`
+5. **Document verification commands**: include the exact test commands plus `pnpm typecheck` and `pnpm biome check --write .`; when schema changes are involved, explicitly instruct the user to run `pnpm db:migrate:dev` instead of executing it automatically.
 
 ### Implementation Plan Structure
 
@@ -275,7 +275,7 @@ export class ServiceName {
 #### 5. Integration Points
 
 - API endpoints affected
-- Database schema changes
+- Database schema changes (when required, update Drizzle schema files first and instruct the user to run `pnpm db:migrate:dev` for generating/applying migrations; never hand-write SQL files or run the command on their behalf)
 - External service interactions
 - State management updates
 
@@ -285,7 +285,7 @@ export class ServiceName {
 - [ ] Type checking passes (`pnpm typecheck`)
 - [ ] Linting/formatting passes (`pnpm biome check --write .`)
 - [ ] No regression in existing tests
-- [ ] Database migrations verified (use psql or direct SQL checks when schema changes occur)
+- [ ] Database migrations verified (after requesting the user to run `pnpm db:migrate:dev`; use psql or direct SQL checks to confirm results when schema changes occur)
 - [ ] Browser/manual UI checks are delegated to developer when necessary
 - [ ] Performance benchmarks (if applicable)
 
