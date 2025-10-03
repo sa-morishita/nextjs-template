@@ -18,7 +18,6 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 ## Development Guidelines
 
 - Think in English, but generate responses in Japanese
-- サーバーサイドの診断ログはすべて `@/lib/utils/logger` を使用する（`logger.info`/`warn` は開発環境のみ出力、本番では `logger.error` のみ出力）
 
 ## Workflow
 
@@ -33,8 +32,8 @@ Note: Optional for new features or small additions. You can proceed directly to 
 
 1. `/kiro:spec-init [detailed description]` - Initialize spec with detailed project description
 2. `/kiro:spec-requirements [feature]` - Generate requirements document
-3. `/kiro:spec-design [feature]` - Interactive: "Have you reviewed requirements.md? [y/N]"
-4. `/kiro:spec-tasks [feature]` - Interactive: Confirms both requirements and design review
+3. `/kiro:spec-design-ui-first [feature]` - Interactive: "Have you reviewed requirements.md? [y/N]"
+4. `/kiro:spec-tasks-vertical [feature]` - Interactive: Confirms both requirements and design review
 
 ### Phase 2: Progress Tracking
 
@@ -276,3 +275,7 @@ When using dev3000 for development monitoring:
 - **Server**: `getSession()` for server-side access
 - **Features**: Email verification, password reset, session management
 - **Database**: Better Auth tables + application tables in Drizzle schema
+
+### Logging
+
+- All server-side diagnostic logs must use `@/lib/utils/logger`. Only `logger.info` and `logger.warn` are output in development; in production, only `logger.error` is output.

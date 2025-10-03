@@ -101,7 +101,17 @@
       "WebFetch(domain:neon.com)",
       "WebFetch(domain:vercel.com)",
       "WebFetch(domain:www.convex.dev)",
-      "WebFetch(domain:developers.cloudflare.com)"
+      "WebFetch(domain:developers.cloudflare.com)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then source .env.local)",
+      "Bash(else echo \"❌ .env.localファイルが見つかりません。setup-development-environment.shを実行してください\")",
+      "Bash(if ! command -v minio)",
+      "Bash(/dev/null)",
+      "Bash(then echo \"⚠️  MinIOがインストールされていません。インストールしています...\")",
+      "Bash(brew install:*)",
+      "Bash(if ! command -v mc)",
+      "Bash(then echo \"⚠️  MinIO Client (mc) が見つかりません。brew install minio-mc でインストールしてください\")",
+      "Bash(else echo \"✅ MinIO Client (mc) は利用可能です\")"
     ],
     "deny": []
   },

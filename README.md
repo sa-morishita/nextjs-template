@@ -52,10 +52,7 @@
 # 2. 依存関係のインストール
 pnpm install
 
-# 3. Git hooks（Lefthook）のセットアップ
-pnpm lefthook install
-
-# 4. データベースの再生成とマイグレーション（破壊的）
+# 3. データベースの再生成とマイグレーション（破壊的）
 pnpm db:migrate:dev
 ```
 
