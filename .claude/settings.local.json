@@ -111,7 +111,12 @@
       "Bash(brew install:*)",
       "Bash(if ! command -v mc)",
       "Bash(then echo \"⚠️  MinIO Client (mc) が見つかりません。brew install minio-mc でインストールしてください\")",
-      "Bash(else echo \"✅ MinIO Client (mc) は利用可能です\")"
+      "Bash(else echo \"✅ MinIO Client (mc) は利用可能です\")",
+      "Bash(pnpm next:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:env.t3.gg)",
+      "Read(//Users/satoshi/**)",
+      "WebFetch(domain:zod.dev)"
     ],
     "deny": []
   },
