@@ -1,5 +1,5 @@
 import 'server-only';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './config';
 import {
@@ -88,33 +88,13 @@ export async function signOut(): Promise<void> {
   });
 }
 
-async function clearSessionCookies() {
-  const cookieStore = await cookies();
-
-  const cookieNames = [
-    'better-auth.session_token',
-    'session_token',
-    '__Secure-better-auth.session_token',
-    '__Host-better-auth.session_token',
-  ];
-
-  for (const cookieName of cookieNames) {
-    try {
-      cookieStore.delete(cookieName);
-    } catch {
-      // 削除エラーは無視
-    }
-  }
-}
-
 export async function getSession() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    await clearSessionCookies();
-    redirect('/auth/login');
+    redirect('/auth/signout');
   }
 
   return session;
