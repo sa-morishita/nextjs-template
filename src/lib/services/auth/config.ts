@@ -4,9 +4,9 @@ import { nextCookies } from 'better-auth/next-js';
 import { genericOAuth } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
-import { env } from '@/app/env.mjs';
 import { db } from '@/db';
 import { user } from '@/db/schema';
+import { env } from '@/env';
 import {
   sendPasswordResetEmailWithReact,
   sendVerificationEmailWithReact,

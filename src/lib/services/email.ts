@@ -1,7 +1,7 @@
 import 'server-only';
 import { render } from '@react-email/components';
 import { Resend } from 'resend';
-import { env } from '@/app/env.mjs';
+import { env } from '@/env';
 import {
   EmailVerificationTemplate,
   PasswordResetTemplate,

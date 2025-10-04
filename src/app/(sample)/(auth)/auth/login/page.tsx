@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { env } from '@/app/env.mjs';
-import { LineLoginButton } from '@/components/auth/line-login-button';
+import { LineLoginButton } from '@/components/sample/auth/line-login-button';
 import {
   Card,
   CardContent,
@@ -10,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { env } from '@/env';
 import { AUTH_ERROR_MESSAGES } from '@/lib/constants/auth-errors';
 import { SignInForm } from '../_components/sign-in-form';
 

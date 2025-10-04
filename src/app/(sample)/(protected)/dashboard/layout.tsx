@@ -1,7 +1,7 @@
 import {
   DashboardFooter,
   DashboardHeader,
-} from '@/components/dashboard/layout';
+} from '@/components/sample/dashboard/layout';
 
 export default function ProtectedLayout(props: LayoutProps<'/dashboard'>) {
   return (

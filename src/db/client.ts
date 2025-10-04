@@ -5,7 +5,7 @@ if (!process.env.CLI_MODE) {
 
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { env } from '@/app/env.mjs';
+import { env } from '@/env';
 import * as schema from './schema';
 
 /**

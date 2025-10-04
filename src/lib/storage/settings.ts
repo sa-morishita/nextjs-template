@@ -1,4 +1,4 @@
-import { env } from '@/app/env.mjs';
+import { env } from '@/env';
 
 type StorageMode = 'minio' | 'r2';
 

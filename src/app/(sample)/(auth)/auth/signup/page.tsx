@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { env } from '@/app/env.mjs';
-import { LineLoginButton } from '@/components/auth/line-login-button';
+import { LineLoginButton } from '@/components/sample/auth/line-login-button';
 import {
   Card,
   CardContent,
@@ -10,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { env } from '@/env';
 import { SignUpForm } from '../_components/sign-up-form';
 
 export default function SignUpPage() {

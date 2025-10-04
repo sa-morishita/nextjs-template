@@ -3,7 +3,7 @@ import {
   inferAdditionalFields,
 } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
-import { env } from '@/app/env.mjs';
+import { env } from '@/env';
 import type { auth } from './config';
 
 export const authClient = createAuthClient({
