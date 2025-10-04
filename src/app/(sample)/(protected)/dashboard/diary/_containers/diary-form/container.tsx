@@ -4,8 +4,9 @@
  * セッションを確認してユーザーIDを取得し、
  * 当日の日記が既に存在するかを確認してPresentational Componentに渡す
  */
+
+import { checkTodaysDiaryUsecase } from '@/lib/sample/usecases/diary';
 import { getSession } from '@/lib/services/auth';
-import { checkTodaysDiaryUsecase } from '@/lib/usecases/diary';
 import { DiaryFormPresentational } from './presentational';
 
 export async function DiaryFormContainer() {

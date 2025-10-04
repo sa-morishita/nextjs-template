@@ -2,9 +2,9 @@
 
 import { revalidateTag } from 'next/cache';
 import { flattenValidationErrors } from 'next-safe-action';
-import { createDiaryFormSchema } from '@/lib/schemas';
+import { createDiaryFormSchema } from '@/lib/sample/schemas/diary';
+import { createDiaryUsecase } from '@/lib/sample/usecases/diary';
 import { getSignedUploadUrlSchema } from '@/lib/schemas/upload';
-import { createDiaryUsecase } from '@/lib/usecases/diary';
 import { generateDiaryImageUploadUrl } from '@/lib/usecases/upload';
 import { CACHE_TAGS } from '@/lib/utils/cache-tags';
 import { privateActionClient } from '@/lib/utils/safe-action';

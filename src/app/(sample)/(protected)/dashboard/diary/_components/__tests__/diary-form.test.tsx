@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiaryForm } from '../diary-form';
 
 // Mock the server actions
-vi.mock('@/lib/actions/diary', () => ({
+vi.mock('@/lib/sample/actions/diary', () => ({
   createDiaryAction: vi.fn(),
   getSignedUploadUrlAction: vi.fn(),
 }));
@@ -53,13 +53,13 @@ describe('DiaryForm', () => {
     });
 
     // サーバーアクションが呼ばれていないことを確認
-    const { createDiaryAction } = await import('@/lib/actions/diary');
+    const { createDiaryAction } = await import('@/lib/sample/actions/diary');
     expect(createDiaryAction).not.toHaveBeenCalled();
   });
 
   it('有効な入力でフォームを送信するとサーバーアクションが呼ばれる', async () => {
     const user = userEvent.setup();
-    const { createDiaryAction } = await import('@/lib/actions/diary');
+    const { createDiaryAction } = await import('@/lib/sample/actions/diary');
 
     const mockCreateDiaryAction = vi.mocked(createDiaryAction);
     mockCreateDiaryAction.mockResolvedValue({

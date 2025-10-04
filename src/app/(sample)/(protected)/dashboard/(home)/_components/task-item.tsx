@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import type { Todo } from '@/db/schema';
-import { toggleTodoAction } from '@/lib/actions/todos';
+import { toggleTodoAction } from '@/lib/sample/actions/todos';
 import { convertActionErrorToMessage } from '@/lib/utils/error-converter';
 import { cn } from '@/lib/utils/utils';
 

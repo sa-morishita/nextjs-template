@@ -162,26 +162,37 @@ When using dev3000 for development monitoring:
 
 ### Project Structure
 
+**Sample Code (Reference Only - Do NOT modify):**
+- `app/(sample)/` - Sample route implementations
+  - `(auth)/` - Authentication flow examples
+  - `(protected)/dashboard/` - Protected dashboard examples
+- `components/sample/` - Sample UI components
+  - `auth/` - Auth component examples
+  - `dashboard/` - Dashboard component examples
+- `lib/sample/` - Sample business logic (layered architecture examples)
+  - `actions/`, `usecases/`, `mutations/`, `queries/`, `domain/`, `schemas/`
+  - **Delete when no longer needed**: `rm -rf src/app/(sample) src/components/sample src/lib/sample`
+
+**Implementation Code (Add new features here):**
 - `app/` - Next.js App Router pages and layouts
-  - `(auth)/` - Authentication routes (login, signup, password reset)
-  - `(protected)/` - Protected routes requiring authentication
+  - `(protected)/` - Protected routes requiring authentication (NEW features go here)
+  - `(auth)/` - Authentication routes (can add custom auth routes here)
   - `api/auth/[...all]/` - Better Auth API routes
 - `components/` - Reusable UI components
-  - `auth/` - Authentication-specific components
-  - `dashboard/` - Dashboard layout components
   - `ui/` - Base UI components (shadcn/ui pattern)
+  - *Add feature-specific components here*
 - `db/` - Database configuration
   - `schema/` - Drizzle ORM schemas (auth, todos, diaries)
-- `lib/` - Core application logic:
+- `lib/` - Core application logic (NEW features go here):
   - `actions/` - Server actions (imports from usecases)
   - `domain/` - Domain models and business rules
   - `mutations/` - Data mutation logic
   - `queries/` - Data fetching logic
   - `schemas/` - Zod validation schemas
-  - `services/` - Business services (auth, email, image upload)
-  - `storage/` - Unified storage interface (MinIO for dev, R2 for prod)
+  - `services/` - Business services (auth, email, image upload) *SHARED*
+  - `storage/` - Unified storage interface (MinIO for dev, R2 for prod) *SHARED*
   - `usecases/` - Application business logic
-  - `utils/` - Utility functions and helpers
+  - `utils/` - Utility functions and helpers *SHARED*
 - `src/test/` - Test utilities and helpers (Vitest)
 - `e2e/` - E2E tests with Playwright
   - `specs/` - Test specifications
@@ -207,6 +218,34 @@ When using dev3000 for development monitoring:
 - **Memoization**: Automatic within same render
 
 ## Development Guidelines
+
+### Template Usage Guidelines
+
+**IMPORTANT**: This project contains sample/reference code to demonstrate best practices. When implementing new features:
+
+#### Sample Code Locations
+
+- `src/app/(sample)/` - Sample routes (auth flow, protected dashboard examples)
+- `src/components/sample/` - Sample UI components
+- `src/lib/sample/` - Sample business logic (layered architecture patterns)
+
+#### Development Rules for Templates
+
+1. **Reference Only**: Use sample code as pattern reference, do NOT modify or add to it
+2. **New Implementation**: Place new features directly under `src/lib/`, `src/app/`, `src/components/`
+3. **Route Placement**:
+   ```
+   src/lib/actions/feature.ts       # Business logic always in lib root
+   src/app/(protected)/feature/     # Protected routes (requires auth)
+   src/app/(auth)/custom-login/     # Custom auth routes
+   src/app/public-feature/          # Public routes (no auth)
+   ```
+4. **Shared Infrastructure**: These stay in `lib/` root (NOT sample):
+   - Authentication: `lib/actions/auth.ts`, `lib/usecases/auth.ts`
+   - Upload: `lib/usecases/upload.ts`, `lib/domain/upload.ts`
+   - Services: `lib/services/`, `lib/storage/`
+   - Utilities: `lib/utils/`
+5. **Cleanup**: Remove sample code when no longer needed: `rm -rf src/app/(sample) src/components/sample src/lib/sample`
 
 ### AI Assistant Guidelines
 

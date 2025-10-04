@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TaskForm } from '../task-form';
 
 // Mock the server actions
-vi.mock('@/lib/actions/todos', () => ({
+vi.mock('@/lib/sample/actions/todos', () => ({
   createTodoAction: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ describe('TaskForm', () => {
       });
 
       // Server action should not be called
-      const { createTodoAction } = await import('@/lib/actions/todos');
+      const { createTodoAction } = await import('@/lib/sample/actions/todos');
       expect(createTodoAction).not.toHaveBeenCalled();
     });
 
@@ -55,7 +55,7 @@ describe('TaskForm', () => {
       });
 
       // Server action should not be called
-      const { createTodoAction } = await import('@/lib/actions/todos');
+      const { createTodoAction } = await import('@/lib/sample/actions/todos');
       expect(createTodoAction).not.toHaveBeenCalled();
     });
   });
@@ -65,7 +65,7 @@ describe('TaskForm', () => {
       const user = userEvent.setup();
 
       // Get mocked function
-      const { createTodoAction } = await import('@/lib/actions/todos');
+      const { createTodoAction } = await import('@/lib/sample/actions/todos');
       const mockCreateTodoAction = vi.mocked(createTodoAction);
 
       // Mock successful response
@@ -99,7 +99,7 @@ describe('TaskForm', () => {
       const user = userEvent.setup();
 
       // Get mocked function
-      const { createTodoAction } = await import('@/lib/actions/todos');
+      const { createTodoAction } = await import('@/lib/sample/actions/todos');
       const mockCreateTodoAction = vi.mocked(createTodoAction);
 
       // Mock a delayed response

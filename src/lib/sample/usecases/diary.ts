@@ -9,10 +9,13 @@ import {
   type DiaryFilters,
   isValidDiaryContent,
   isValidDiaryTitle,
-} from '@/lib/domain/diary';
-import { createDiary } from '@/lib/mutations/diaries';
-import { getTodaysDiaryByUserId, getUserDiaries } from '@/lib/queries/diaries';
-import { createDiaryFormSchema } from '@/lib/schemas/diary';
+} from '@/lib/sample/domain/diary';
+import { createDiary } from '@/lib/sample/mutations/diaries';
+import {
+  getTodaysDiaryByUserId,
+  getUserDiaries,
+} from '@/lib/sample/queries/diaries';
+import { createDiaryFormSchema } from '@/lib/sample/schemas/diary';
 
 interface UsecaseContext {
   userId: string;

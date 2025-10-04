@@ -1,5 +1,5 @@
+import { getDiaryListUsecase } from '@/lib/sample/usecases/diary';
 import { getSession } from '@/lib/services/auth';
-import { getDiaryListUsecase } from '@/lib/usecases/diary';
 import { parseDateFromQueryParam } from '@/lib/utils/date';
 import { DiaryListPresentational } from './presentational';
 

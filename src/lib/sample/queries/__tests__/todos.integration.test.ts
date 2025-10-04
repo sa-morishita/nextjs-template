@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getTodosByUserId } from '@/lib/queries/todos';
-import { getSession } from '@/lib/services/auth';
+import { getTodosByUserId } from '@/lib/sample/queries/todos';
 import {
   getTodoByIdUsecase,
   getTodosSummaryUsecase,
-} from '@/lib/usecases/todos';
+} from '@/lib/sample/usecases/todos';
+import { getSession } from '@/lib/services/auth';
 import {
   createTestTodo,
   createTestUser,

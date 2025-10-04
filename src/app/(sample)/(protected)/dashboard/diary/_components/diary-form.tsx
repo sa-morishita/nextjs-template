@@ -25,16 +25,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  createDiaryAction,
-  getSignedUploadUrlAction,
-} from '@/lib/actions/diary';
-import { DIARY_MESSAGES } from '@/lib/domain/diary';
-import {
   isAllowedImageType,
   isValidFileSize,
   UPLOAD_MESSAGES,
 } from '@/lib/domain/upload';
-import { createDiaryFormSchema } from '@/lib/schemas';
+import {
+  createDiaryAction,
+  getSignedUploadUrlAction,
+} from '@/lib/sample/actions/diary';
+import { DIARY_MESSAGES } from '@/lib/sample/domain/diary';
+import { createDiaryFormSchema } from '@/lib/sample/schemas/diary';
 import { uploadFileWithSignedUrl } from '@/lib/services/image-upload-client.service';
 import { generateClientBlurDataURL } from '@/lib/utils/blur-generator';
 import { convertActionErrorToMessage } from '@/lib/utils/error-converter';

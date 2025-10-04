@@ -116,7 +116,8 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:env.t3.gg)",
       "Read(//Users/satoshi/**)",
-      "WebFetch(domain:zod.dev)"
+      "WebFetch(domain:zod.dev)",
+      "Bash(git log:*)"
     ],
     "deny": []
   },

@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { getTodoById, getTodosByUserId } from '@/lib/queries/todos';
-import { createTodoUsecase, updateTodoUsecase } from '@/lib/usecases/todos';
+import { getTodoById, getTodosByUserId } from '@/lib/sample/queries/todos';
+import {
+  createTodoUsecase,
+  updateTodoUsecase,
+} from '@/lib/sample/usecases/todos';
 import {
   createTestTodo,
   createTestUser,

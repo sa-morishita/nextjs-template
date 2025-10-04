@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { TodoInsert, TodoUpdate } from '@/lib/mutations/todos';
-import { createTodo, updateTodo } from '@/lib/mutations/todos';
+import type { TodoInsert, TodoUpdate } from '@/lib/sample/mutations/todos';
+import { createTodo, updateTodo } from '@/lib/sample/mutations/todos';
 import {
   createTestTodo,
   createTestUser,

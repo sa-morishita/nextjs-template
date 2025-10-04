@@ -2,8 +2,14 @@
 
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
-import { createTodoFormSchema, updateTodoFormSchema } from '@/lib/schemas';
-import { createTodoUsecase, updateTodoUsecase } from '@/lib/usecases/todos';
+import {
+  createTodoFormSchema,
+  updateTodoFormSchema,
+} from '@/lib/sample/schemas/todos';
+import {
+  createTodoUsecase,
+  updateTodoUsecase,
+} from '@/lib/sample/usecases/todos';
 import { CACHE_TAGS } from '@/lib/utils/cache-tags';
 import { privateActionClient } from '@/lib/utils/safe-action';
 

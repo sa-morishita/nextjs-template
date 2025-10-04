@@ -10,15 +10,18 @@ import {
   TodoAccessDeniedError,
   type TodoStats,
   type TodosSummary,
-} from '@/lib/domain/todos';
-import { createTodo, updateTodo } from '@/lib/mutations/todos';
+} from '@/lib/sample/domain/todos';
+import { createTodo, updateTodo } from '@/lib/sample/mutations/todos';
 import {
   getPendingTodoCount,
   getTodoById,
   getTodoByUserIdAndTitle,
   getTodosByUserId,
-} from '@/lib/queries/todos';
-import { createTodoFormSchema, updateTodoFormSchema } from '@/lib/schemas';
+} from '@/lib/sample/queries/todos';
+import {
+  createTodoFormSchema,
+  updateTodoFormSchema,
+} from '@/lib/sample/schemas/todos';
 import { getSession } from '@/lib/services/auth';
 
 interface UsecaseContext {

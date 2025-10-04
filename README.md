@@ -106,11 +106,76 @@ LINE_LOGIN_CHANNEL_SECRET=<LINE Developersから取得>
 
 ## 開発ガイド
 
+### ⚠️ テンプレートからの開発開始
+
+このテンプレートには **サンプル実装** が含まれています。新規開発を始める前に以下を確認してください：
+
+#### サンプルコードの場所
+
+```
+src/
+├── app/(sample)/          # サンプルルート実装
+├── components/sample/     # サンプルコンポーネント
+└── lib/sample/           # サンプルビジネスロジック
+```
+
+#### サンプルコードの扱い
+
+**参照用として活用:**
+- レイヤードアーキテクチャのパターン参照
+- Server Actions、キャッシュ戦略の実装例
+- Container/Presentationalパターンの学習
+
+**削除する場合:**
+```bash
+# サンプルコード一括削除
+rm -rf src/app/(sample)
+rm -rf src/components/sample
+rm -rf src/lib/sample
+```
+
+**詳細な使い方:**
+- `src/app/(sample)/_README.md` - ルート実装パターン
+- `src/components/sample/README.md` - コンポーネントパターン
+- `src/lib/sample/README.md` - レイヤードアーキテクチャ詳細
+
+#### 新規実装の配置場所
+
+**❌ 間違い（サンプルに追加）:**
+```typescript
+// NG: サンプル配下に追加
+src/lib/sample/actions/posts.ts
+src/app/(sample)/posts/
+```
+
+**✅ 正しい（lib直下 + 適切なルートに追加）:**
+```typescript
+// ビジネスロジック: lib直下に追加
+src/lib/actions/posts.ts
+src/lib/usecases/posts.ts
+src/lib/mutations/posts.ts
+src/lib/queries/posts.ts
+
+// ルート: 用途に応じて配置
+src/app/(protected)/posts/      # 認証が必要なページ
+src/app/(auth)/new-login/       # 認証関連ページ（追加する場合）
+src/app/public-posts/           # 公開ページ
+```
+
+#### 共通機能（保持されているもの）
+
+以下は共通インフラとして `lib/` 直下に保持されています：
+
+- 認証関連: `lib/actions/auth.ts`, `lib/usecases/auth.ts`
+- アップロード: `lib/usecases/upload.ts`, `lib/domain/upload.ts`
+- サービス層: `lib/services/`, `lib/storage/`
+- ユーティリティ: `lib/utils/`
+
 ### 基本的な開発フロー
 
-1. **機能開発**: `src/lib/`配下でロジックを実装
+1. **機能開発**: `src/lib/`配下でロジックを実装（`lib/sample/`は参照のみ）
 2. **UI作成**: `src/components/`でコンポーネントを作成
-3. **ルーティング**: `src/app/`でページを配置
+3. **ルーティング**: `src/app/(protected)/`でページを配置
 4. **テスト**: `*.test.ts(x)`でテストを記述
 
 ### ロギング方針

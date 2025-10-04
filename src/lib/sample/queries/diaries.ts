@@ -3,7 +3,7 @@ import { and, between, desc, eq, gte, like, lte, or } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/db';
 import { type Diary, diaries } from '@/db/schema';
-import type { DiaryFilters } from '@/lib/domain/diary';
+import type { DiaryFilters } from '@/lib/sample/domain/diary';
 import { CACHE_TAGS } from '@/lib/utils/cache-tags';
 import { getJapanEndOfDay, getJapanStartOfDay } from '@/lib/utils/date';
 

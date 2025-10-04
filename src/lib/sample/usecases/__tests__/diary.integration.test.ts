@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { getUserDiaries } from '@/lib/queries/diaries';
-import { createDiaryUsecase } from '@/lib/usecases/diary';
+import { getUserDiaries } from '@/lib/sample/queries/diaries';
+import { createDiaryUsecase } from '@/lib/sample/usecases/diary';
 import {
   createTestDiary,
   createTestUser,

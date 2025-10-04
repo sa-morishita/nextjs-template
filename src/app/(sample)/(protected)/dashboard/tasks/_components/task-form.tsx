@@ -21,9 +21,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { createTodoAction } from '@/lib/actions/todos';
-import { TODO_MESSAGES } from '@/lib/domain/todos';
-import { createTodoFormSchema } from '@/lib/schemas';
+import { createTodoAction } from '@/lib/sample/actions/todos';
+import { TODO_MESSAGES } from '@/lib/sample/domain/todos';
+import { createTodoFormSchema } from '@/lib/sample/schemas/todos';
 import { convertActionErrorToMessage } from '@/lib/utils/error-converter';
 
 export function TaskForm() {

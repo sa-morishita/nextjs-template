@@ -1,9 +1,33 @@
 # ディレクトリ構成と主要モジュール
-- `src/app`: Next.js App Router。`(auth)` と `(protected)` セグメントで認証状態を切替。`dashboard` セグメントは Todo/Diary 用 UI。`api/auth/[...all]/route.ts` で Better Auth のハンドラを委譲。
-- `src/lib`: ドメインロジック。本層は `actions` (next-safe-action)、`usecases`、`mutations`、`queries`、`services`、`domain`、`utils`、`storage` に分割。例えば `actions/todos.ts` の `createTodoAction` が `usecases/todos.ts` の `createTodoUsecase` を呼び出し、`mutations/todos.ts` や `queries/todos.ts` がデータアクセスを担当。
+
+## アプリケーション構造
+- `src/app`: Next.js App Router。`(auth)` と `(protected)` セグメントで認証状態を切替。
+  - `(sample)`: **参照専用サンプルコード** - auth flow、dashboard examples
+  - `(protected)`: 新規実装はここに配置（認証必須）
+  - `api/auth/[...all]/route.ts`: Better Auth のハンドラを委譲
+
+## ビジネスロジック層（src/lib）
+- **新規実装**: `src/lib` 直下に配置（`actions/`, `usecases/`, `mutations/`, `queries/`, `domain/`, `schemas/`）
+- **サンプルコード**: `src/lib/sample` - 参照専用、変更不可
+- **共有インフラ**: `services/`, `storage/`, `utils/` - プロジェクト全体で共有
+
+### データフロー
+`actions/` (next-safe-action) → `usecases/` → `mutations/`/`queries/` → データベース
+
+### 主要モジュール
 - `src/lib/utils/logger.ts`: プロジェクト標準ロガー。`info`/`warn` は開発専用、本番では `error` のみ出力。
-- `src/db`: Drizzle ORM のセットアップ (`client.ts`)、エクスポート (`index.ts`)、シード (`seed.ts`)。`schema` 配下で `todos`, `diaries`, `auth` テーブルなどを定義 (例: `todos` テーブルは `id`, `userId`, `title`, `completed`, `createdAt`, `updatedAt` を持つ)。
-- `src/components`: shadcn/ui ベースの UI とドメイン別コンポーネント。`ui/` に共通パーツ、`auth/` と `dashboard/` に機能別 UI。
-- `src/hooks`: Zustand ストアやカスタムフックを配置。
-- `src/test`: テストユーティリティ。Vitest/Testing Library サポート。
-- `e2e`: Playwright テスト。`specs` とグローバルセットアップ/ティアダウン。
+- `src/db`: Drizzle ORM のセットアップ (`client.ts`)、エクスポート (`index.ts`)、シード (`seed.ts`)。
+  - `schema`: `todos`, `diaries`, `auth` テーブルなどを定義
+- `src/components`: shadcn/ui ベースの UI
+  - `ui/`: 共通パーツ
+  - `sample/`: サンプルコード（参照専用）
+  - 新規コンポーネントは機能別に配置
+- `src/hooks`: Zustand ストアやカスタムフック
+- `src/test`: テストユーティリティ（Vitest/Testing Library）
+- `e2e`: Playwright テスト（`specs/` とグローバルセットアップ）
+
+## 環境変数管理（env.ts）
+- `@t3-oss/env-nextjs` による型安全な環境変数管理
+- サーバー変数: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `MINIO_*`, `R2_*`
+- クライアント変数: `NEXT_PUBLIC_SITE_URL`
+- ストレージ切替: `USE_R2` で MinIO/R2 を切り替え

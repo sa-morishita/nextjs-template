@@ -1,5 +1,5 @@
+import { getTodoListUsecase } from '@/lib/sample/usecases/todos';
 import { getSession } from '@/lib/services/auth';
-import { getTodoListUsecase } from '@/lib/usecases/todos';
 import { TaskListPresentational } from './presentational';
 
 export async function TaskListContainer() {
