@@ -1,10 +1,12 @@
 #!/usr/bin/env tsx
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
+import { betterAuth } from 'better-auth';
 import dotenv from 'dotenv';
-import { and, count, eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { reset, seed } from 'drizzle-seed';
+import { Pool } from 'pg';
 import postgres from 'postgres';
 import * as schema from '@/db/schema';
 
@@ -63,6 +65,39 @@ if (!isDevelopment || !isLocalHostname(hostname) || isExplicitlyBlocked) {
 const sql = postgres(connectionString, { max: 1 });
 const db = drizzle(sql);
 
+// Better Auth インスタンスを作成（ユーザー作成用）
+const createAuthInstance = () => {
+  const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (!betterAuthSecret || !baseUrl) {
+    throw new Error(
+      'Missing BETTER_AUTH_SECRET or NEXT_PUBLIC_SITE_URL in environment variables',
+    );
+  }
+
+  return betterAuth({
+    database: new Pool({
+      connectionString,
+      ssl: baseUrl.startsWith('https') ? { rejectUnauthorized: false } : false,
+    }),
+    secret: betterAuthSecret,
+    baseURL: baseUrl,
+    basePath: '/api/auth',
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: false, // seedではメール認証をスキップ
+      minPasswordLength: 8,
+      maxPasswordLength: 128,
+    },
+    advanced: {
+      database: {
+        generateId: () => randomUUID(), // UUID v4 生成
+      },
+    },
+  });
+};
+
 async function main() {
   console.log('🌱 Seeding database with sample data...');
 
@@ -72,70 +107,56 @@ async function main() {
     await reset(db, schema);
     console.log('✅ Database reset completed');
 
-    // サンプルユーザーを作成
-    console.log('👤 Creating sample users...');
-    const sampleUsers = [
-      {
-        id: 'user-1',
-        email: 'john@example.com',
-        emailVerified: true,
-        name: 'John Doe',
-        image: null,
-        lineUserId: null,
-        lineUserName: null,
-        lastLoginAt: new Date('2025-01-01T10:00:00Z'),
-      },
-      {
-        id: 'user-2',
-        email: 'jane@example.com',
-        emailVerified: true,
-        name: 'Jane Smith',
-        image: null,
-        lineUserId: null,
-        lineUserName: null,
-        lastLoginAt: new Date('2025-01-10T15:30:00Z'),
-      },
-      {
-        id: 'user-3',
-        email: 'bob@example.com',
-        emailVerified: true,
-        name: 'Bob Johnson',
-        image: null,
-        lineUserId: null,
-        lineUserName: null,
-        lastLoginAt: null,
-      },
-      {
-        id: 'user-4',
-        email: `no-email-U123456789@line.local`,
-        emailVerified: true,
-        name: 'LINE User',
-        image: 'https://example.com/line-profile.jpg',
-        lineUserId: 'U123456789',
-        lineUserName: 'LINEユーザー',
-        lastLoginAt: new Date('2025-01-15T09:00:00Z'),
-      },
-    ];
+    // Better Auth経由でテストユーザーを作成
+    console.log('👤 Creating test user via Better Auth...');
+    const auth = createAuthInstance();
 
-    await db.insert(schema.user).values(sampleUsers);
-    console.log(`✅ Created ${sampleUsers.length} sample users`);
+    const testUserEmail = 'test@example.com';
+    const testUserPassword = 'TestPassword123!';
+    const testUserName = 'Test User';
 
-    // drizzle-seedでTODOサンプルデータを生成
-    console.log('📝 Generating sample todos with drizzle-seed...');
+    const signUpResult = await auth.api.signUpEmail({
+      body: {
+        email: testUserEmail,
+        password: testUserPassword,
+        name: testUserName,
+      },
+    });
+
+    if (!signUpResult?.user) {
+      throw new Error('Failed to create test user via Better Auth');
+    }
+
+    const testUserId = signUpResult.user.id;
+
+    console.log('✅ Test user created successfully!');
+    console.log(`   Email: ${testUserEmail}`);
+    console.log(`   Password: ${testUserPassword}`);
+    console.log(`   Name: ${testUserName}`);
+    console.log(`   User ID: ${testUserId}`);
+
+    // メール認証済みに更新
+    await db
+      .update(schema.user)
+      .set({ emailVerified: true })
+      .where(eq(schema.user.id, testUserId));
+    console.log('✅ Email verified for test user');
+
+    // drizzle-seedでサンプルデータを生成（テストユーザーに紐付け）
+    console.log('📝 Generating sample data with drizzle-seed...');
 
     // seedに渡すスキーマを定義
     const seedSchema = {
       todos: schema.todos,
+      diaries: schema.diaries,
     };
 
-    // drizzle-seedを実行してTODOデータを生成
+    // drizzle-seedを実行してデータを生成（すべてtestUserIdに紐付け）
     await seed(db, seedSchema, { count: 20, seed: 12345 }).refine((funcs) => ({
       todos: {
         columns: {
           id: funcs.uuid(),
-          userId: funcs.valuesFromArray({
-            values: sampleUsers.map((user) => user.id),
-          }),
+          userId: funcs.default({ defaultValue: testUserId }), // すべてテストユーザーに紐付け
           title: funcs.valuesFromArray({
             values: [
               'Complete the project documentation',
@@ -166,9 +187,60 @@ async function main() {
           ]),
         },
       },
+      diaries: {
+        columns: {
+          id: funcs.uuid(),
+          userId: funcs.default({ defaultValue: testUserId }), // すべてテストユーザーに紐付け
+          title: funcs.valuesFromArray({
+            values: [
+              '朝のコーヒータイム',
+              '新しいプロジェクトのアイデア',
+              '週末の散歩',
+              '読書メモ: デザインパターン',
+              '今日の学び',
+              'チームミーティングの振り返り',
+              '美味しいランチ',
+              'プログラミングの発見',
+              '自然の中で',
+              '家族との時間',
+              '新しい技術の探求',
+              '趣味のプロジェクト',
+              '夕焼けの風景',
+              'お気に入りの音楽',
+              '料理の実験',
+              '友人との会話',
+              '旅行の計画',
+              '運動の記録',
+              'アートギャラリー訪問',
+              '季節の変化',
+            ],
+          }),
+          content: funcs.loremIpsum({ sentencesCount: 5 }), // 5文のダミーテキスト
+          imageUrl: funcs.valuesFromArray({
+            values: Array.from(
+              { length: 20 },
+              (_, i) => `https://picsum.photos/seed/${i + 1}/800/600`,
+            ),
+          }),
+          blurDataUrl: funcs.default({ defaultValue: null }),
+          status: funcs.weightedRandom([
+            {
+              value: funcs.default({ defaultValue: 'published' }),
+              weight: 0.7,
+            }, // 70% published
+            { value: funcs.default({ defaultValue: 'draft' }), weight: 0.2 }, // 20% draft
+            { value: funcs.default({ defaultValue: 'archived' }), weight: 0.1 }, // 10% archived
+          ]),
+          type: funcs.weightedRandom([
+            { value: funcs.default({ defaultValue: 'diary' }), weight: 0.6 }, // 60% diary
+            { value: funcs.default({ defaultValue: 'note' }), weight: 0.3 }, // 30% note
+            { value: funcs.default({ defaultValue: 'memo' }), weight: 0.1 }, // 10% memo
+          ]),
+        },
+      },
     }));
 
-    console.log('✅ Sample todos created successfully with drizzle-seed');
+    console.log('✅ Sample data created successfully with drizzle-seed');
 
     // RFC 4122準拠のUUIDに更新（drizzle-seedのバグ回避）
     // 注意: drizzle-seed v0.3.1 には UUID生成のバグがあります
@@ -190,46 +262,49 @@ async function main() {
     }
     console.log(`✅ Updated ${todosToUpdate.length} todo UUIDs`);
 
+    // DiariesのUUIDを更新
+    const diariesToUpdate = await db
+      .select({ id: schema.diaries.id })
+      .from(schema.diaries);
+
+    for (const diary of diariesToUpdate) {
+      const newId = randomUUID();
+      await db
+        .update(schema.diaries)
+        .set({ id: newId })
+        .where(eq(schema.diaries.id, diary.id));
+    }
+    console.log(`✅ Updated ${diariesToUpdate.length} diary UUIDs`);
+
     // 最終的な統計を表示
     const finalTodoCount = await db
       .select({ count: count() })
       .from(schema.todos);
 
-    const userTodoStats = await Promise.all(
-      sampleUsers.map(async (user) => {
-        const userTodos = await db
-          .select({ count: count() })
-          .from(schema.todos)
-          .where(eq(schema.todos.userId, user.id));
+    const completedTodos = await db
+      .select({ count: count() })
+      .from(schema.todos)
+      .where(eq(schema.todos.completed, true));
 
-        const completedTodos = await db
-          .select({ count: count() })
-          .from(schema.todos)
-          .where(
-            and(
-              eq(schema.todos.userId, user.id),
-              eq(schema.todos.completed, true),
-            ),
-          );
+    const finalDiaryCount = await db
+      .select({ count: count() })
+      .from(schema.diaries);
 
-        return {
-          user: user.name,
-          totalTodos: userTodos[0]?.count || 0,
-          completedTodos: completedTodos[0]?.count || 0,
-        };
-      }),
-    );
+    const publishedDiaries = await db
+      .select({ count: count() })
+      .from(schema.diaries)
+      .where(eq(schema.diaries.status, 'published'));
 
     console.log('📊 Seeding Summary:');
-    console.log(`   Total Users: ${sampleUsers.length}`);
+    console.log(`   Test User: ${testUserName} (${testUserEmail})`);
     console.log(`   Total TODOs: ${finalTodoCount[0]?.count || 0}`);
-    console.log('   User TODO Statistics:');
-
-    for (const stat of userTodoStats) {
-      console.log(
-        `     ${stat.user}: ${stat.totalTodos} todos (${stat.completedTodos} completed)`,
-      );
-    }
+    console.log(
+      `   Completed TODOs: ${completedTodos[0]?.count || 0} (${Math.round(((completedTodos[0]?.count || 0) / (finalTodoCount[0]?.count || 1)) * 100)}%)`,
+    );
+    console.log(`   Total Diaries: ${finalDiaryCount[0]?.count || 0}`);
+    console.log(
+      `   Published Diaries: ${publishedDiaries[0]?.count || 0} (${Math.round(((publishedDiaries[0]?.count || 0) / (finalDiaryCount[0]?.count || 1)) * 100)}%)`,
+    );
 
     console.log('✅ Database seeded successfully');
     await sql.end();
